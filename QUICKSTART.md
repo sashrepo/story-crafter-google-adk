@@ -33,38 +33,42 @@ uv run python example.py
 **Option B: Use ADK CLI directly**
 
 ```bash
-uv run adk run orchestrator/story_orchestrator --user_message "Create a 5-minute bedtime story about a brave mermaid for an 8-year-old"
+uv run adk run agents/orchestrator/story_orchestrator
 ```
 
-**Option C: Test a single agent**
+Then type your message when prompted.
+
+**Option C: Use ADK Web UI**
 
 ```bash
-uv run adk run agents/user_intent --user_message "I want an exciting space adventure for a 10-year-old"
+adk web agents/
 ```
+
+Then select "orchestrator" and chat with it in the browser.
+
+**Option D: Test a single agent**
+
+```bash
+uv run adk run agents/user_intent
+```
+
+Then type your message when prompted.
 
 ### 4. Use in Your Code
 
 ```python
 import asyncio
-from orchestrator.story_orchestrator.agent import story_orchestrator, runtime
+from agents.orchestrator.story_orchestrator.agent import story_orchestrator
 
-async def generate():
-    result = await runtime.run_agent(
-        story_orchestrator,
-        "Create a story about dragons for a 10-year-old"
-    )
-    print(result.output_text)
-
-asyncio.run(generate())
+# See example.py for full implementation with proper Runner setup
 ```
 
 ## 📁 Project Structure
 
 ```
 story-crafter-adk/
-├── agents/              # Individual story agents
+├── agents/              # All story agents including orchestrator
 ├── models/              # Pydantic data models
-├── orchestrator/        # Multi-agent coordination
 ├── example.py          # Example usage script
 └── README.md           # Full documentation
 ```
@@ -79,7 +83,7 @@ story-crafter-adk/
 | Plot Architect | Structure plots | `uv run adk run agents/plot_architect` |
 | Story Writer | Write narrative prose | `uv run adk run agents/story_writer` |
 | Art Director | Generate illustration prompts | `uv run adk run agents/art_director` |
-| **Orchestrator** | **Run all agents together** | `uv run adk run orchestrator/story_orchestrator` |
+| **Orchestrator** | **Run all agents together** | `uv run adk run agents/orchestrator/story_orchestrator` |
 
 ## 🐛 Troubleshooting
 

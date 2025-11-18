@@ -17,7 +17,7 @@ sys.path.insert(0, str(project_root))
 
 from google.adk import Runner
 from google.adk.sessions import InMemorySessionService
-from orchestrator.story_orchestrator.agent import story_orchestrator
+from agents.orchestrator.story_orchestrator.agent import story_orchestrator
 
 
 async def generate_story_example():

@@ -51,7 +51,13 @@ echo "GOOGLE_API_KEY=your-api-key-here" > .env
 Generate a complete story with all agents working together:
 
 ```bash
-uv run adk run orchestrator/story_orchestrator --user_message "Create a 5-minute bedtime story for my 8-year-old about a brave mermaid"
+uv run adk run agents/orchestrator/story_orchestrator
+```
+
+Then interact with the agent in the CLI, or use the web interface:
+
+```bash
+adk web agents/
 ```
 
 ### Running Individual Agents
@@ -92,11 +98,10 @@ uv run adk run agents/art_director --user_message "Create illustration prompts f
 
 ```python
 import asyncio
-from orchestrator.story_orchestrator.agent import story_orchestrator, runtime
+from agents.orchestrator.story_orchestrator.agent import story_orchestrator
 
 async def generate_story():
-    result = await runtime.run_agent(
-        story_orchestrator,
+    # See example.py for full implementation with proper Runner setup
         "Create a 5-minute bedtime story about a brave mermaid for an 8-year-old"
     )
     
@@ -296,7 +301,7 @@ See the main Story Crafter project for licensing information.
 
 2. **Token Usage**: The orchestrator makes multiple API calls. Monitor your usage with verbose logging:
    ```bash
-   uv run adk run orchestrator/story_orchestrator --user_message "..." --verbose
+   uv run adk run agents/orchestrator/story_orchestrator --verbose
    ```
 
 3. **Parallel Benefits**: The parallel stage (world + characters + plot) reduces latency significantly compared to sequential execution.

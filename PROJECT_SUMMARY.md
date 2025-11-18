@@ -115,13 +115,13 @@ uv run adk run agents/user_intent --user_message "Create a story for an 8-year-o
 
 ### CLI (Full Orchestrator)
 ```bash
-uv run adk run orchestrator/story_orchestrator --user_message "Tell me a story about dragons"
+uv run adk run agents/orchestrator/story_orchestrator
 ```
 
 ### Python API
 ```python
-from orchestrator.story_orchestrator.agent import story_orchestrator, runtime
-result = await runtime.run_agent(story_orchestrator, "Your story prompt")
+from agents.orchestrator.story_orchestrator.agent import story_orchestrator
+# See example.py for full implementation with proper Runner setup
 ```
 
 ## 🎨 Customization
