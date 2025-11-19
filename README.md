@@ -4,14 +4,13 @@ A multi-agent storytelling system powered by the **Google Agent Development Kit 
 
 ## 🎯 Overview
 
-Story Crafter ADK orchestrates multiple AI agents to collaboratively generate rich, age-appropriate stories with illustrations. Each agent specializes in a specific aspect of storytelling:
+Story Crafter ADK orchestrates multiple AI agents to collaboratively generate rich, age-appropriate stories. Each agent specializes in a specific aspect of storytelling:
 
 - **User Intent Agent**: Extracts structured requirements from natural language requests
 - **Worldbuilder Agent**: Creates immersive story worlds with rules, locations, and aesthetics
 - **Character Forge Agent**: Designs multi-dimensional characters with personalities and motivations
 - **Plot Architect Agent**: Structures compelling narratives with proper story beats
 - **Story Writer Agent**: Transforms structured components into engaging prose
-- **Art Director Agent**: Generates detailed illustration prompts for key story moments
 
 ## 🚀 Quick Start
 
@@ -87,11 +86,6 @@ uv run adk run agents/plot_architect --user_message "Create a plot about overcom
 **Story Writer Agent:**
 ```bash
 uv run adk run agents/story_writer --user_message "Write a 5-minute story about a mermaid who discovers courage"
-```
-
-**Art Director Agent:**
-```bash
-uv run adk run agents/art_director --user_message "Create illustration prompts for key moments in the mermaid story"
 ```
 
 ### Using in Python

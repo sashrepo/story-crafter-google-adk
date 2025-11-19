@@ -24,11 +24,12 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from models.world import WorldModel
+from config import create_gemini_model
 
 # Create the Worldbuilder Agent with structured output
 root_agent = Agent(
     name="worldbuilder_agent",
-    model="gemini-2.0-flash-exp",
+    model=create_gemini_model("gemini-2.0-flash-exp"),
     instruction="""You are the Worldbuilder Agent for Story Crafter, a creative AI that designs rich, immersive story worlds.
 
 Your job is to generate detailed story worlds based on user intent (themes, tone, genre, age level).

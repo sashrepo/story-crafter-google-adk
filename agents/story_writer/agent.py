@@ -27,11 +27,12 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from models.story import StoryModel
+from config import create_gemini_model
 
 # Create the Story Writer Agent with structured output
 root_agent = Agent(
     name="story_writer_agent",
-    model="gemini-2.0-flash-exp",
+    model=create_gemini_model("gemini-2.0-flash-exp"),
     instruction="""You are the Story Writer Agent for Story Crafter, a masterful storyteller who transforms structured story components into engaging narrative prose.
 
 Your job is to write complete stories based on user intent, world details, character profiles, and plot structure.

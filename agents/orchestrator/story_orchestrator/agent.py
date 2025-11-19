@@ -11,7 +11,6 @@ Workflow:
    - Character Forge Agent  
    - Plot Architect Agent
 3. Story Writer Agent (sequential)
-4. Art Director Agent (sequential)
 
 USAGE (CLI):
     adk run orchestrator/story_orchestrator
@@ -41,7 +40,6 @@ from agents.worldbuilder.agent import root_agent as worldbuilder_agent
 from agents.character_forge.agent import root_agent as character_forge_agent
 from agents.plot_architect.agent import root_agent as plot_architect_agent
 from agents.story_writer.agent import root_agent as story_writer_agent
-from agents.art_director.agent import root_agent as art_director_agent
 
 # Optional model imports for type hints
 from models.intent import UserIntent
@@ -49,7 +47,6 @@ from models.world import WorldModel
 from models.character import CharacterModel
 from models.plot import PlotModel
 from models.story import StoryModel
-from models.artwork import ArtworkModel
 
 
 # --------------------------------------------------------------------
@@ -67,28 +64,12 @@ parallel_content_generation = ParallelAgent(
 
 
 # --------------------------------------------------------------------
-# 2️⃣ Sequential pipeline (non-runnable workflow)
+# 2️⃣ Top-level Sequential Agent (runnable via ADK Runtime)
 # --------------------------------------------------------------------
-story_orchestrator_pipeline = SequentialAgent(
-    name="story_orchestrator_pipeline",
-    description="Pipeline combining intent, world, characters, plot, writing, and art",
-    sub_agents=[
-        user_intent_agent,
-        parallel_content_generation,
-        story_writer_agent,
-        art_director_agent,
-    ],
-)
-
-
-# --------------------------------------------------------------------
-# 3️⃣ Top-level LLM Agent (runnable via ADK Runtime)
-# --------------------------------------------------------------------
-story_orchestrator = LlmAgent(
+story_orchestrator = SequentialAgent(
     name="story_orchestrator",
-    model="gemini-2.5-flash",
     description="Top-level orchestrator agent for full story generation",
-    sub_agents=[story_orchestrator_pipeline],
+    sub_agents=[user_intent_agent, parallel_content_generation, story_writer_agent],
 )
 
 

@@ -23,11 +23,12 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from models.intent import UserIntent
+from config import create_gemini_model
 
 # Create the User Intent Agent with structured output
 root_agent = Agent(
     name="user_intent_agent",
-    model="gemini-2.0-flash-exp",
+    model=create_gemini_model("gemini-2.0-flash-exp"),
     instruction="""You are the User Intent Agent for Story Crafter, a specialized AI that extracts structured information from story requests.
 
 Your job is to analyze a user's natural language story request and extract the following information:
