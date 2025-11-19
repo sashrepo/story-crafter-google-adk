@@ -72,6 +72,10 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+# --- Theme ---
+import theme
+theme.apply_google_kids_theme()
+
 # --- Helper Functions for Story Library ---
 LIBRARY_FILE = "story_library.json"
 
@@ -136,7 +140,8 @@ init_session_state()
 
 # --- Sidebar ---
 with st.sidebar:
-    st.title("Story Controls")
+    theme.render_header()
+    theme.render_custom_title("Story Controls")
     
     # User & Session Config
     st.subheader("👤 Identity")
@@ -173,8 +178,9 @@ with st.sidebar:
 
 # --- Main Chat Interface ---
 
-st.title("📚 Story Crafter Chat")
-st.caption("Collaborate with AI agents to build your story.")
+theme.render_header()
+theme.render_custom_title("Story Crafter Chat", "Collaborate with AI agents to build your story.")
+
 
 # Display Chat History
 for message in st.session_state.messages:
@@ -186,7 +192,7 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
 
 # Handle Input
-if prompt := st.chat_input("What kind of story would you like to create?"):
+if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
     # 1. Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt, "avatar": "👤"})
     with st.chat_message("user", avatar="👤"):
@@ -198,7 +204,7 @@ if prompt := st.chat_input("What kind of story would you like to create?"):
     else:
         with st.chat_message("assistant", avatar="🤖"):
             response_placeholder = st.empty()
-            status_placeholder = st.status("Agents are working...", expanded=True)
+            status_placeholder = st.status("✨ Magic in progress... ✨", expanded=True)
             
             # Variables to track state during streaming
             state_tracker = {"final_story": ""}

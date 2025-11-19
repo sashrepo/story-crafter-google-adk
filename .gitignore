@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.cursor/
 build/
 develop-eggs/
 dist/
