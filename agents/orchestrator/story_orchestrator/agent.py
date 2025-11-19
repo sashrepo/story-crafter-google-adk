@@ -46,7 +46,7 @@ from agents.plot_architect.agent import root_agent as plot_architect_agent
 from agents.story_writer.agent import root_agent as story_writer_agent
 from agents.story_quality_loop.agent import story_quality_loop
 from agents.story_editor.agent import root_agent as story_editor_agent
-from agents.story_question_answerer.agent import root_agent as story_qa_agent
+from agents.story_guide.agent import root_agent as story_guide_agent
 
 # Optional model imports for type hints
 from models.intent import UserIntent
@@ -130,21 +130,21 @@ def get_orchestrator(enable_refinement: bool = True, mode: str = "create"):
         # Need fresh safety agent and QA agent
         import importlib
         import agents.safety.agent
-        import agents.story_question_answerer.agent
+        import agents.story_guide.agent
         
         importlib.reload(agents.safety.agent)
-        importlib.reload(agents.story_question_answerer.agent)
+        importlib.reload(agents.story_guide.agent)
         
         from agents.safety.agent import root_agent as fresh_safety_agent
-        from agents.story_question_answerer.agent import root_agent as fresh_qa_agent
+        from agents.story_guide.agent import root_agent as fresh_guide_agent
 
-        # Safety -> QA
+        # Safety -> Guide
         return SequentialAgent(
-            name="story_qa_orchestrator",
-            description="QA pipeline: safety → question answerer",
+            name="story_guide_orchestrator",
+            description="Guide pipeline: safety → story guide",
             sub_agents=[
                 fresh_safety_agent,
-                fresh_qa_agent,
+                fresh_guide_agent,
             ],
         )
 

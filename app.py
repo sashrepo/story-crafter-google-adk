@@ -33,7 +33,7 @@ try:
     import agents.story_quality_loop.agent
     import agents.router.agent
     import agents.story_editor.agent
-    import agents.story_question_answerer.agent
+    import agents.story_guide.agent
     
     # Reload modules to ensure fresh clients for each run
     importlib.reload(agents.safety.agent)
@@ -44,7 +44,7 @@ try:
     importlib.reload(agents.story_writer.agent)
     importlib.reload(agents.story_quality_loop.agent)
     importlib.reload(agents.story_editor.agent)
-    importlib.reload(agents.story_question_answerer.agent)
+    importlib.reload(agents.story_guide.agent)
     importlib.reload(agents.orchestrator.story_orchestrator.agent)
     importlib.reload(agents.router.agent)
     
@@ -338,21 +338,21 @@ if prompt := st.chat_input("What kind of story would you like to create?"):
                                 })
                                 state_tracker["final_story"] = content_text
 
-                            elif agent_name == "story_question_answerer":
-                                status_placeholder.write("Answering question...")
+                            elif agent_name == "story_guide_agent":
+                                status_placeholder.write("Consulting Story Guide...")
                                 
                                 # Render the answer immediately
                                 with st.chat_message("assistant", avatar="🤖"):
-                                    st.markdown(f"### 🤔 Answer\n\n{content_text}")
+                                    st.markdown(f"### 🤔 Guide's Answer\n\n{content_text}")
                                 
                                 st.session_state.messages.append({
                                     "role": "assistant",
                                     "content": content_text,
-                                    "title": "🤔 Answer",
+                                    "title": "🤔 Guide's Answer",
                                     "is_expander": True,
                                     "avatar": "🤖"
                                 })
-                                # Do NOT update final_story for QA, as it's just an answer
+                                # Do NOT update final_story for Guide, as it's just an answer
 
                             elif agent_name == "safety_agent":
                                 if "Content Rejected" in content_text:

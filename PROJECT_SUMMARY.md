@@ -3,7 +3,8 @@
 ## 🎉 What We Built
 
 A complete **ADK-only** story generation system with:
-- ✅ 6 specialized AI agents (no memory implementation)
+- ✅ **9 specialized AI agents** (no memory implementation)
+- ✅ **Smart Router** for handling New Story vs. Edit vs. Q&A workflows
 - ✅ Multi-agent orchestration with parallel execution
 - ✅ Complete project structure with uv package management
 - ✅ Comprehensive documentation and examples
@@ -13,13 +14,16 @@ A complete **ADK-only** story generation system with:
 
 ```
 story-crafter-adk/
-├── agents/                          # 6 Story Generation Agents
+├── agents/                          # 9 Story Generation Agents
+│   ├── router/                     # 🚦 Classifies user intent (Create/Edit/QA)
 │   ├── user_intent/                # Extracts structured story requirements
 │   ├── worldbuilder/               # Creates immersive story worlds
 │   ├── character_forge/            # Designs multi-dimensional characters
 │   ├── plot_architect/             # Structures compelling narratives
 │   ├── story_writer/               # Writes engaging prose
-│   └── story_quality_loop/         # Reviews and refines stories
+│   ├── story_quality_loop/         # Reviews and refines stories
+│   ├── story_editor/               # ✏️ Edits existing stories
+│   └── story_guide/                # ❓ Answers questions about the story
 ├── models/                          # Pydantic Data Models
 │   ├── intent.py                   # UserIntent
 │   ├── world.py                    # WorldModel
@@ -30,6 +34,8 @@ story-crafter-adk/
 ├── orchestrator/                    # Multi-Agent Coordination
 │   └── story_orchestrator/         # Sequential + Parallel workflow
 ├── example.py                       # Complete usage example
+├── app.py                           # Streamlit Web UI
+├── FLOW_DIAGRAM.md                 # Architecture Visualization
 ├── README.md                        # Full documentation
 ├── QUICKSTART.md                    # Quick start guide
 └── pyproject.toml                   # Project configuration
@@ -45,57 +51,62 @@ cd story-crafter-adk
 # Set your API key
 export GOOGLE_API_KEY="your-key-here"
 
-# Run the example
-uv run python example.py
+# Run the Web UI
+streamlit run app.py
 ```
 
 ## 🎯 Key Features
 
-### 1. Stateless Architecture
+### 1. Smart Routing Architecture
+- **Create Mode**: Full pipeline (Intent → World/Char/Plot → Writer → Refiner)
+- **Edit Mode**: Fast pipeline (Safety → Editor)
+- **Guide Mode**: Fast pipeline (Safety → Guide) for Q&A
+- *Result:* Efficient token usage and faster response times for simple requests.
+
+### 2. Stateless Architecture
 - **No memory layer** - pure ADK agents
 - Perfect for serverless/API deployments
 - Each story generation is independent
 
-### 2. Parallel Execution
+### 3. Parallel Execution
 - World, Character, and Plot agents run simultaneously
 - Faster story generation
 - Efficient API usage
 
-### 3. Structured Output
+### 4. Structured Output
 - All agents use Pydantic models
 - Type-safe data flow between agents
 - Easy to integrate with other systems
 
-### 4. Age-Appropriate Content
+### 5. Age-Appropriate Content
 - Automatically adjusts for target age
 - Safe content generation
 - Appropriate complexity and vocabulary
 
 ## 📊 Agent Workflow
 
-```
-User Request (natural language)
-         ↓
-    [User Intent Agent]
-         ↓
-    Extract: age, themes, tone, genre, length
-         ↓
-    ┌─────────────────────────────────┐
-    │  Parallel Content Generation    │
-    ├──────────┬──────────┬───────────┤
-    │ World    │Character │   Plot    │
-    │ Builder  │  Forge   │ Architect │
-    └──────────┴──────────┴───────────┘
-         ↓
-    [Story Writer Agent]
-         ↓
-    Complete narrative prose
-         ↓
-    [Story Quality Loop]
-         ↓
-    Review and refine story
-         ↓
-    ✅ Complete Story Package
+```mermaid
+graph TD
+    User([👤 User Input]) --> Router[🚦 Router Agent]
+    
+    Router -- "NEW_STORY" --> Create[✨ Create Mode]
+    Router -- "EDIT_STORY" --> Edit[✏️ Edit Mode]
+    Router -- "QUESTION" --> Guide[❓ Guide Mode]
+
+    subgraph Create [Full Generation]
+        Safety1[🛡️ Safety] --> Intent[🧠 Intent]
+        Intent --> Parallel[⚡ World/Char/Plot]
+        Parallel --> Writer[✍️ Writer]
+        Writer --> Quality[🔄 Loop]
+    end
+
+    subgraph Edit [Fast Edit]
+        Safety2[🛡️ Safety] --> Editor[✍️ Story Editor]
+    end
+
+    subgraph Guide [Q&A]
+        Safety3[🛡️ Safety] --> GuideAgent[🤖 Story Guide]
+    end
 ```
 
 ## 🛠️ Technologies Used
@@ -137,24 +148,26 @@ Simply edit the instruction text to customize agent behavior.
 |---------|---------------|-------------------|
 | Memory | SQLAlchemy + DB | ❌ None |
 | API | FastAPI | ❌ None |
-| UI | Streamlit | ❌ None |
+| UI | Streamlit | ✅ Streamlit (Included) |
 | Agents | ✅ ADK | ✅ ADK |
 | Models | ✅ Pydantic | ✅ Pydantic |
 | Orchestrator | ✅ Sequential + Parallel | ✅ Sequential + Parallel |
 
-**story-crafter-adk** is the **pure agent implementation** - no persistence, no API, no UI.
+**story-crafter-adk** is the **pure agent implementation** - no persistence, no API (just agents).
 Perfect for embedding into your own applications!
 
 ## 📚 Documentation
 
 - **README.md** - Complete project documentation
 - **QUICKSTART.md** - Get started in 5 minutes
+- **FLOW_DIAGRAM.md** - Visual architecture
 - **example.py** - Working code examples
 - **Agent files** - Each agent has detailed inline documentation
 
 ## ✅ What's Ready
 
-- [x] All 6 agents implemented and tested
+- [x] All 9 agents implemented and tested
+- [x] Smart Router & Dynamic Orchestration
 - [x] Multi-agent orchestrator with parallel execution
 - [x] Complete data models
 - [x] uv package management configured
@@ -167,7 +180,7 @@ Perfect for embedding into your own applications!
 ## 🎯 Next Steps
 
 1. **Set your API key**: `export GOOGLE_API_KEY="..."`
-2. **Run the example**: `uv run python example.py`
+2. **Run the Web UI**: `streamlit run app.py`
 3. **Test individual agents**: `uv run adk run agents/user_intent --user_message "..."`
 4. **Customize agent prompts** for your specific use case
 5. **Integrate into your application** using the Python API

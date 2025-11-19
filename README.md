@@ -6,11 +6,16 @@ A multi-agent storytelling system powered by the **Google Agent Development Kit 
 
 Story Crafter ADK orchestrates multiple AI agents to collaboratively generate rich, age-appropriate stories. Each agent specializes in a specific aspect of storytelling:
 
+- **Router Agent**: Smartly classifies user input (Create, Edit, or Question) to route to the correct pipeline.
 - **User Intent Agent**: Extracts structured requirements from natural language requests
 - **Worldbuilder Agent**: Creates immersive story worlds with rules, locations, and aesthetics
 - **Character Forge Agent**: Designs multi-dimensional characters with personalities and motivations
 - **Plot Architect Agent**: Structures compelling narratives with proper story beats
 - **Story Writer Agent**: Transforms structured components into engaging prose
+- **Story Quality Loop**: Iteratively reviews and refines stories for quality.
+- **Story Editor Agent**: Handles requests to rewrite or modify existing stories.
+- **Story Guide Agent**: Answers questions about the story world without modifying the text.
+- **Safety Agent**: Ensures all content is safe and age-appropriate.
 
 ## 🚀 Quick Start
 
@@ -112,18 +117,8 @@ from agents.orchestrator.story_orchestrator.agent import story_orchestrator
 
 async def generate_story():
     # See example.py for full implementation with proper Runner setup
-        "Create a 5-minute bedtime story about a brave mermaid for an 8-year-old"
-    )
-    
-    print("Generated Story:")
-    print(result.output_text)
-    
-    # Access individual agent outputs
-    for step in result.steps:
-        print(f"\nAgent: {step.agent_name}")
-        print(f"Output: {step.output_text[:100]}...")
-
-asyncio.run(generate_story())
+    # ...
+    pass
 ```
 
 ## 📁 Project Structure
@@ -131,12 +126,15 @@ asyncio.run(generate_story())
 ```
 story-crafter-adk/
 ├── agents/                    # Individual story generation agents
+│   ├── router/               # Routes requests (Create vs Edit vs QA)
 │   ├── user_intent/          # Extracts structured intent from requests
 │   ├── worldbuilder/         # Creates story worlds
 │   ├── character_forge/      # Designs characters
 │   ├── plot_architect/       # Structures plots
 │   ├── story_writer/         # Writes narrative prose
-│   └── story_quality_loop/   # Reviews and refines stories
+│   ├── story_quality_loop/   # Reviews and refines stories
+│   ├── story_editor/         # Edits existing stories
+│   └── story_guide/          # Answers questions about the story
 ├── models/                    # Pydantic data models
 │   ├── intent.py             # UserIntent model
 │   ├── world.py              # WorldModel
@@ -152,32 +150,42 @@ story-crafter-adk/
 
 ## 🧩 Architecture
 
-### Agent Workflow
+### Smart Routing Workflow
 
-```
-User Request
-    ↓
-[User Intent Agent] → Extracts: age, themes, tone, genre, length
-    ↓
-┌───────────────────────────────────────┐
-│   Parallel Content Generation         │
-├───────────────┬───────────┬──────────┤
-│ Worldbuilder  │ Character │ Plot     │
-│ Agent         │ Forge     │ Architect│
-└───────────────┴───────────┴──────────┘
-    ↓
-[Story Writer Agent] → Generates narrative prose
-    ↓
-Complete Story with Quality Check
+The system now uses a **Router Agent** to determine the user's intent and select the efficient pipeline:
+
+```mermaid
+graph TD
+    User([👤 User Input]) --> Router[🚦 Router Agent]
+    
+    Router -- "NEW_STORY" --> Create[✨ Create Mode]
+    Router -- "EDIT_STORY" --> Edit[✏️ Edit Mode]
+    Router -- "QUESTION" --> Guide[❓ Guide Mode]
+
+    subgraph Create [Full Generation]
+        Safety1[🛡️ Safety] --> Intent[🧠 Intent]
+        Intent --> Parallel[⚡ World/Char/Plot]
+        Parallel --> Writer[✍️ Writer]
+        Writer --> Quality[🔄 Loop]
+    end
+
+    subgraph Edit [Fast Edit]
+        Safety2[🛡️ Safety] --> Editor[✍️ Story Editor]
+    end
+
+    subgraph Guide [Q&A]
+        Safety3[🛡️ Safety] --> GuideAgent[🤖 Story Guide]
+    end
 ```
 
 ### Key Features
 
-- **Parallel Execution**: World, character, and plot generation happen simultaneously for speed
-- **Structured Output**: All agents return typed Pydantic models for reliable data flow
-- **Age-Appropriate Content**: Agents adjust complexity, tone, and themes based on target age
-- **No Memory Persistence**: Pure stateless workflow - perfect for API/serverless deployments
-- **Modular Design**: Use individual agents or the full orchestrator
+- **Smart Routing**: Distinguishes between creating new stories, editing existing ones, and answering questions.
+- **Parallel Execution**: World, character, and plot generation happen simultaneously for speed.
+- **Structured Output**: All agents return typed Pydantic models for reliable data flow.
+- **Age-Appropriate Content**: Agents adjust complexity, tone, and themes based on target age.
+- **No Memory Persistence**: Pure stateless workflow - perfect for API/serverless deployments.
+- **Modular Design**: Use individual agents or the full orchestrator.
 
 ## 🔧 Configuration
 
@@ -231,49 +239,6 @@ Lint code:
 uv run ruff check .
 ```
 
-## 📝 Example Output
-
-**Input:**
-```
-"Create a 5-minute bedtime story for my 8-year-old about a mermaid who loves tumbling"
-```
-
-**Output Structure:**
-```json
-{
-  "intent": {
-    "age": 8,
-    "themes": ["mermaids", "tumbling", "courage"],
-    "tone": "calming",
-    "genre": "fantasy",
-    "length_minutes": 5
-  },
-  "world": {
-    "name": "Tumble Reef",
-    "description": "An underwater world where mermaids practice acrobatic tumbling...",
-    "rules": ["Water currents provide lift for tumbling", "Bioluminescent coral marks practice spots"],
-    "locations": ["The Spiral Gardens", "Deep Caves", "Tournament Arena"]
-  },
-  "character": {
-    "name": "Marina",
-    "role": "protagonist",
-    "motivations": "Wants to join the Royal Tumbling Guard like her mother",
-    // ...
-  },
-  "plot": {
-    "setup": "Marina lives in Tumble Reef where she practices tumbling daily...",
-    "conflict": "A mysterious current disrupts the tournament grounds...",
-    // ...
-  },
-  "story": {
-    "title": "Marina's Brave Journey",
-    "text": "Once upon a time, in the shimmering waters of Tumble Reef...",
-    "word_count": 650,
-    "estimated_reading_time_minutes": 5
-  }
-}
-```
-
 ## 🤝 Contributing
 
 This is a focused ADK implementation without memory persistence. For contributions:
@@ -325,4 +290,3 @@ See the main Story Crafter project for licensing information.
 ---
 
 Built with ❤️ using Google Agent Development Kit
-
