@@ -19,8 +19,10 @@ try:
     from google.adk import Runner
     from google.adk.sessions import InMemorySessionService
     from google.genai import types
+    
     # Import agent modules to reload them
     import agents.orchestrator.story_orchestrator.agent
+    import agents.safety.agent
     import agents.user_intent.agent
     import agents.worldbuilder.agent
     import agents.character_forge.agent
@@ -29,6 +31,7 @@ try:
     import agents.story_quality_loop.agent
     
     # Reload modules to ensure fresh clients for each run
+    importlib.reload(agents.safety.agent)
     importlib.reload(agents.user_intent.agent)
     importlib.reload(agents.worldbuilder.agent)
     importlib.reload(agents.character_forge.agent)
@@ -38,6 +41,7 @@ try:
     importlib.reload(agents.orchestrator.story_orchestrator.agent)
     
     from agents.orchestrator.story_orchestrator.agent import get_orchestrator
+    from services.perspective import SafetyViolationError
 except ImportError as e:
     st.error(f"Failed to import required modules: {e}")
     st.info("Make sure you have installed the package dependencies.")
@@ -70,6 +74,7 @@ This system orchestrates multiple AI agents to create plots, characters, worlds,
 with st.sidebar:
     st.markdown("### 🤖 Agents Active")
     st.markdown("""
+    - 🛡️ **Safety**: Checks content safety
     - 🎭 **User Intent**: Understands request
     - 🌍 **Worldbuilder**: Creates the setting
     - 👥 **Character Forge**: Creates characters
@@ -208,47 +213,63 @@ if generate_btn and user_request:
                     
                     # Process events one by one as they arrive
                     async def process_events_async():
-                        async for event in runner.run_async(
-                            user_id=user_id,
-                            session_id=session.id,
-                            new_message=user_message
-                        ):
-                            if hasattr(event, 'content') and event.content:
-                                # Extract text from Content object
-                                content_text = ""
-                                if hasattr(event.content, 'parts'):
-                                    for part in event.content.parts:
-                                        if hasattr(part, 'text') and part.text:
-                                            content_text += part.text
-                                elif isinstance(event.content, str):
-                                    content_text = event.content
-                                
-                                if content_text.strip():
-                                    agent_name = getattr(event, 'author', 'Unknown Agent')
+                        try:
+                            async for event in runner.run_async(
+                                user_id=user_id,
+                                session_id=session.id,
+                                new_message=user_message
+                            ):
+                                if hasattr(event, 'content') and event.content:
+                                    # Extract text from Content object
+                                    content_text = ""
+                                    if hasattr(event.content, 'parts'):
+                                        for part in event.content.parts:
+                                            if hasattr(part, 'text') and part.text:
+                                                content_text += part.text
+                                    elif isinstance(event.content, str):
+                                        content_text = event.content
                                     
-                                    # Special handling for loop agents
-                                    if agent_name == "quality_critic":
-                                        iteration_count[0] += 1
-                                        critique_texts.append(content_text)
-                                        if "APPROVED" in content_text:
-                                            st.success(f"✅ Story approved after {iteration_count[0]} iteration(s)!")
+                                    if content_text.strip():
+                                        agent_name = getattr(event, 'author', 'Unknown Agent')
+                                        
+                                        # Special handling for loop agents
+                                        if agent_name == "quality_critic":
+                                            iteration_count[0] += 1
+                                            critique_texts.append(content_text)
+                                            if "APPROVED" in content_text:
+                                                st.success(f"✅ Story approved after {iteration_count[0]} iteration(s)!")
+                                            else:
+                                                st.warning(f"🔄 Iteration {iteration_count[0]}: Refining story based on feedback...")
+                                            with st.expander(f"Critique #{iteration_count[0]}", expanded=False):
+                                                st.markdown(content_text)
+                                        
+                                        elif agent_name == "story_refiner":
+                                            with st.expander(f"📝 Refined Story (Iteration {iteration_count[0]})", expanded=(iteration_count[0] == len(critique_texts))):
+                                                st.markdown(content_text)
+                                        
+                                        elif agent_name == "story_writer_agent":
+                                            with st.expander(f"📝 Initial Story Draft", expanded=False):
+                                                st.markdown(content_text)
+                                                
+                                        elif agent_name == "safety_agent":
+                                            if "Content Rejected" in content_text:
+                                                st.error(f"🛡️ {content_text}")
+                                                st.stop()
+                                            else:
+                                                # Safety pass, show quietly
+                                                with st.expander(f"🛡️ Safety Check Passed", expanded=False):
+                                                    st.markdown(content_text)
+
                                         else:
-                                            st.warning(f"🔄 Iteration {iteration_count[0]}: Refining story based on feedback...")
-                                        with st.expander(f"Critique #{iteration_count[0]}", expanded=False):
-                                            st.markdown(content_text)
-                                    
-                                    elif agent_name == "story_refiner":
-                                        with st.expander(f"📝 Refined Story (Iteration {iteration_count[0]})", expanded=(iteration_count[0] == len(critique_texts))):
-                                            st.markdown(content_text)
-                                    
-                                    elif agent_name == "story_writer_agent":
-                                        with st.expander(f"📝 Initial Story Draft", expanded=False):
-                                            st.markdown(content_text)
-                                    
-                                    else:
-                                        # Other agents (intent, world, character, plot)
-                                        with st.expander(f"Output from: **{agent_name}**", expanded=False):
-                                            st.markdown(content_text)
+                                            # Other agents (intent, world, character, plot)
+                                            with st.expander(f"Output from: **{agent_name}**", expanded=False):
+                                                st.markdown(content_text)
+                        except Exception as e:
+                            # Raise other exceptions to be caught by the outer handler
+                            # But check if it's a safety violation wrapped in another exception
+                            if "SafetyViolationError" in str(e) or "Content Rejected" in str(e):
+                                raise SafetyViolationError(str(e))
+                            raise e
                     
                     # Run the async processing
                     asyncio.run(process_events_async())
@@ -259,7 +280,16 @@ if generate_btn and user_request:
                 else:
                     st.success(f"✨ Story Generation Complete! (Fast mode - no refinement)")
                     
+            except ExceptionGroup as eg:
+                st.error(f"⚠️ Multiple errors occurred in parallel execution:")
+                for i, e in enumerate(eg.exceptions):
+                    st.error(f"Error {i+1}: {type(e).__name__}: {str(e)}")
+            except SafetyViolationError as e:
+                st.error(f"🛡️ Content Safety Alert: {str(e)}")
             except Exception as e:
-                st.error(f"An error occurred: {str(e)}")
-                st.exception(e)
-
+                # Check if it's a wrapped safety violation
+                if "SafetyViolationError" in str(e) or "Content Rejected" in str(e):
+                     st.error(f"🛡️ Content Safety Alert: {str(e)}")
+                else:
+                    st.error(f"An error occurred: {type(e).__name__}: {str(e)}")
+                    st.exception(e)

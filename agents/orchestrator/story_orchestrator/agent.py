@@ -39,6 +39,7 @@ from google.adk.agents import SequentialAgent, ParallelAgent, LlmAgent
 # Import sub-agents
 # --------------------------------------------------------------------
 from agents.user_intent.agent import root_agent as user_intent_agent
+from agents.safety.agent import root_agent as safety_check_agent
 from agents.worldbuilder.agent import root_agent as worldbuilder_agent
 from agents.character_forge.agent import root_agent as character_forge_agent
 from agents.plot_architect.agent import root_agent as plot_architect_agent
@@ -72,8 +73,9 @@ parallel_content_generation = ParallelAgent(
 # --------------------------------------------------------------------
 story_orchestrator = SequentialAgent(
     name="story_orchestrator",
-    description="Top-level orchestrator: intent → content → writer → quality loop with iterative refinement",
+    description="Top-level orchestrator: safety → intent → content → writer → quality loop with iterative refinement",
     sub_agents=[
+        safety_check_agent,
         user_intent_agent,
         parallel_content_generation,
         story_writer_agent,
@@ -102,6 +104,7 @@ def get_orchestrator(enable_refinement: bool = True):
         # Build fast orchestrator on-demand to avoid parent conflicts
         # Need to reload modules to get truly fresh agent instances
         import importlib
+        import agents.safety.agent
         import agents.user_intent.agent
         import agents.worldbuilder.agent
         import agents.character_forge.agent
@@ -109,6 +112,7 @@ def get_orchestrator(enable_refinement: bool = True):
         import agents.story_writer.agent
         
         # Reload to get fresh instances (not cached)
+        importlib.reload(agents.safety.agent)
         importlib.reload(agents.user_intent.agent)
         importlib.reload(agents.worldbuilder.agent)
         importlib.reload(agents.character_forge.agent)
@@ -116,6 +120,7 @@ def get_orchestrator(enable_refinement: bool = True):
         importlib.reload(agents.story_writer.agent)
         
         # Now import fresh instances
+        from agents.safety.agent import root_agent as fresh_safety_check_agent
         from agents.user_intent.agent import root_agent as fresh_user_intent_agent
         from agents.worldbuilder.agent import root_agent as fresh_worldbuilder_agent
         from agents.character_forge.agent import root_agent as fresh_character_forge_agent
@@ -136,6 +141,7 @@ def get_orchestrator(enable_refinement: bool = True):
             name="story_orchestrator_fast",
             description="Fast orchestrator: intent → content → writer (no refinement)",
             sub_agents=[
+                fresh_safety_check_agent,
                 fresh_user_intent_agent,
                 fresh_parallel_content_generation,
                 fresh_story_writer_agent,  # Skip quality loop for faster generation
