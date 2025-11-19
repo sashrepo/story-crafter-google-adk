@@ -68,7 +68,7 @@ parallel_content_generation = ParallelAgent(
 
 
 # --------------------------------------------------------------------
-# 2️⃣ Top-level Sequential Agent (runnable via ADK Runtime)
+# 2️⃣ Top-level Sequential Agent (default with refinement)
 # --------------------------------------------------------------------
 story_orchestrator = SequentialAgent(
     name="story_orchestrator",
@@ -80,6 +80,67 @@ story_orchestrator = SequentialAgent(
         story_quality_loop,  # LoopAgent with critic + refiner (max 3 iterations)
     ],
 )
+
+
+# --------------------------------------------------------------------
+# Helper function to get orchestrator based on refinement preference
+# --------------------------------------------------------------------
+def get_orchestrator(enable_refinement: bool = True):
+    """
+    Get the appropriate orchestrator based on refinement preference.
+    
+    Args:
+        enable_refinement: If True, returns the default orchestrator with quality loop.
+                          If False, builds a fast orchestrator without refinement.
+    
+    Returns:
+        The appropriate SequentialAgent orchestrator
+    """
+    if enable_refinement:
+        return story_orchestrator
+    else:
+        # Build fast orchestrator on-demand to avoid parent conflicts
+        # Need to reload modules to get truly fresh agent instances
+        import importlib
+        import agents.user_intent.agent
+        import agents.worldbuilder.agent
+        import agents.character_forge.agent
+        import agents.plot_architect.agent
+        import agents.story_writer.agent
+        
+        # Reload to get fresh instances (not cached)
+        importlib.reload(agents.user_intent.agent)
+        importlib.reload(agents.worldbuilder.agent)
+        importlib.reload(agents.character_forge.agent)
+        importlib.reload(agents.plot_architect.agent)
+        importlib.reload(agents.story_writer.agent)
+        
+        # Now import fresh instances
+        from agents.user_intent.agent import root_agent as fresh_user_intent_agent
+        from agents.worldbuilder.agent import root_agent as fresh_worldbuilder_agent
+        from agents.character_forge.agent import root_agent as fresh_character_forge_agent
+        from agents.plot_architect.agent import root_agent as fresh_plot_architect_agent
+        from agents.story_writer.agent import root_agent as fresh_story_writer_agent
+        
+        fresh_parallel_content_generation = ParallelAgent(
+            name="parallel_content_generation_fast",
+            description="Generates world, characters, and plot simultaneously for efficiency",
+            sub_agents=[
+                fresh_worldbuilder_agent,
+                fresh_character_forge_agent,
+                fresh_plot_architect_agent,
+            ],
+        )
+        
+        return SequentialAgent(
+            name="story_orchestrator_fast",
+            description="Fast orchestrator: intent → content → writer (no refinement)",
+            sub_agents=[
+                fresh_user_intent_agent,
+                fresh_parallel_content_generation,
+                fresh_story_writer_agent,  # Skip quality loop for faster generation
+            ],
+        )
 
 
 # --------------------------------------------------------------------

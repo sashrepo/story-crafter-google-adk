@@ -95,7 +95,7 @@ REMEMBER: If the critique says "APPROVED", do NOT rewrite. Just call exit_loop!"
 story_quality_loop = LoopAgent(
     name="story_quality_loop",
     sub_agents=[critic_agent, refiner_agent],
-    max_iterations=2,  # Prevents infinite loops
+    max_iterations=1,  # Prevents infinite loops
 )
 
 
