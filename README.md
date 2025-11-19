@@ -59,6 +59,22 @@ Then interact with the agent in the CLI, or use the web interface:
 adk web agents/
 ```
 
+### Running the Web UI (Streamlit)
+
+Launch the interactive web interface to generate stories:
+
+1. Install Streamlit (if not already installed):
+   ```bash
+   uv add streamlit
+   # or
+   pip install streamlit
+   ```
+
+2. Run the app:
+   ```bash
+   streamlit run app.py
+   ```
+
 ### Running Individual Agents
 
 Test or use individual agents independently:
