@@ -31,6 +31,9 @@ try:
     import agents.plot_architect.agent
     import agents.story_writer.agent
     import agents.story_quality_loop.agent
+    import agents.router.agent
+    import agents.story_editor.agent
+    import agents.story_question_answerer.agent
     
     # Reload modules to ensure fresh clients for each run
     importlib.reload(agents.safety.agent)
@@ -40,9 +43,13 @@ try:
     importlib.reload(agents.plot_architect.agent)
     importlib.reload(agents.story_writer.agent)
     importlib.reload(agents.story_quality_loop.agent)
+    importlib.reload(agents.story_editor.agent)
+    importlib.reload(agents.story_question_answerer.agent)
     importlib.reload(agents.orchestrator.story_orchestrator.agent)
+    importlib.reload(agents.router.agent)
     
     from agents.orchestrator.story_orchestrator.agent import get_orchestrator
+    from agents.router.agent import root_agent as router_agent
     from services.perspective import SafetyViolationError
 except ImportError as e:
     st.error(f"Failed to import required modules: {e}")
@@ -120,6 +127,8 @@ def init_session_state():
         st.session_state.user_id = "user_" + str(uuid.uuid4())[:8]
     if "session_id" not in st.session_state:
         st.session_state.session_id = str(uuid.uuid4())
+    if "current_story" not in st.session_state:
+        st.session_state.current_story = ""
     if "library" not in st.session_state:
         st.session_state.library = load_library()
 
@@ -213,7 +222,47 @@ if prompt := st.chat_input("What kind of story would you like to create?"):
                         session_id=session_id
                     )
                 
-                orchestrator = get_orchestrator(enable_refinement=enable_refinement)
+                # --- Routing Logic ---
+                mode = "create"
+                if st.session_state.current_story:
+                    status_placeholder.write("🧠 Analyzing request...")
+                    
+                    # Run Router Agent
+                    router_runner = Runner(
+                        agent=router_agent,
+                        app_name="agents",
+                        session_service=session_service
+                    )
+                    
+                    router_input = types.Content(role="user", parts=[types.Part(text=f"User Input: {prompt}")])
+                    
+                    router_response_text = ""
+                    async for event in router_runner.run_async(
+                        user_id=user_id,
+                        session_id=session_id, 
+                        new_message=router_input
+                    ):
+                         if hasattr(event, 'content') and isinstance(event.content, str):
+                             router_response_text += event.content
+                         elif hasattr(event, 'content') and hasattr(event.content, 'parts'):
+                             for part in event.content.parts:
+                                 router_response_text += part.text
+                    
+                    # Parse decision
+                    router_data = json.loads(router_response_text) if router_response_text.strip().startswith('{') else {}
+                    
+                    # Fallback if strict JSON fails, try simple string matching
+                    if "EDIT_STORY" in router_response_text:
+                        mode = "edit"
+                    elif "QUESTION" in router_response_text:
+                        mode = "question"
+                    elif "NEW_STORY" in router_response_text:
+                        mode = "create"
+                        st.session_state.current_story = "" # Reset for new story
+                        
+                    status_placeholder.write(f"Target: {mode.upper()}")
+
+                orchestrator = get_orchestrator(enable_refinement=enable_refinement, mode=mode)
                 runner = Runner(
                     agent=orchestrator,
                     app_name="agents",
@@ -278,6 +327,33 @@ if prompt := st.chat_input("What kind of story would you like to create?"):
                                 })
                                 state_tracker["final_story"] = content_text # Update candidate for final story
                             
+                            elif agent_name == "story_editor_agent":
+                                status_placeholder.write("Editing story...")
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": content_text,
+                                    "title": "📝 Edited Story",
+                                    "is_expander": True,
+                                    "avatar": "✍️"
+                                })
+                                state_tracker["final_story"] = content_text
+
+                            elif agent_name == "story_question_answerer":
+                                status_placeholder.write("Answering question...")
+                                
+                                # Render the answer immediately
+                                with st.chat_message("assistant", avatar="🤖"):
+                                    st.markdown(f"### 🤔 Answer\n\n{content_text}")
+                                
+                                st.session_state.messages.append({
+                                    "role": "assistant",
+                                    "content": content_text,
+                                    "title": "🤔 Answer",
+                                    "is_expander": True,
+                                    "avatar": "🤖"
+                                })
+                                # Do NOT update final_story for QA, as it's just an answer
+
                             elif agent_name == "safety_agent":
                                 if "Content Rejected" in content_text:
                                     st.error(f"🛡️ Safety Rejection: {content_text}")
@@ -320,6 +396,7 @@ if prompt := st.chat_input("What kind of story would you like to create?"):
                     
                     # Automatically save to library if it looks like a story
                     if len(state_tracker["final_story"]) > 100:
+                        st.session_state.current_story = state_tracker["final_story"]
                         save_to_library(state_tracker["final_story"], st.session_state.session_id, st.session_state.user_id)
                         st.toast("Story saved to library!", icon="💾")
                         

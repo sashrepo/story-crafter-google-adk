@@ -45,6 +45,8 @@ from agents.character_forge.agent import root_agent as character_forge_agent
 from agents.plot_architect.agent import root_agent as plot_architect_agent
 from agents.story_writer.agent import root_agent as story_writer_agent
 from agents.story_quality_loop.agent import story_quality_loop
+from agents.story_editor.agent import root_agent as story_editor_agent
+from agents.story_question_answerer.agent import root_agent as story_qa_agent
 
 # Optional model imports for type hints
 from models.intent import UserIntent
@@ -87,17 +89,66 @@ story_orchestrator = SequentialAgent(
 # --------------------------------------------------------------------
 # Helper function to get orchestrator based on refinement preference
 # --------------------------------------------------------------------
-def get_orchestrator(enable_refinement: bool = True):
+def get_orchestrator(enable_refinement: bool = True, mode: str = "create"):
     """
-    Get the appropriate orchestrator based on refinement preference.
+    Get the appropriate orchestrator based on mode and refinement preference.
     
     Args:
-        enable_refinement: If True, returns the default orchestrator with quality loop.
-                          If False, builds a fast orchestrator without refinement.
+        enable_refinement: If True, returns the default orchestrator with quality loop (only for 'create' mode).
+        mode: One of "create", "edit", "question".
+              - create: Full story generation pipeline
+              - edit: Modifies existing story
+              - question: Answers questions about existing story
     
     Returns:
-        The appropriate SequentialAgent orchestrator
+        The appropriate Agent orchestrator
     """
+    
+    if mode == "edit":
+        # Need fresh safety agent and editor agent to avoid parent conflicts
+        import importlib
+        import agents.safety.agent
+        import agents.story_editor.agent
+        
+        importlib.reload(agents.safety.agent)
+        importlib.reload(agents.story_editor.agent)
+        
+        from agents.safety.agent import root_agent as fresh_safety_agent
+        from agents.story_editor.agent import root_agent as fresh_editor_agent
+
+        # Safety -> Editor
+        return SequentialAgent(
+            name="story_editor_orchestrator",
+            description="Editor pipeline: safety → editor",
+            sub_agents=[
+                fresh_safety_agent,
+                fresh_editor_agent,
+            ],
+        )
+        
+    if mode == "question":
+        # Need fresh safety agent and QA agent
+        import importlib
+        import agents.safety.agent
+        import agents.story_question_answerer.agent
+        
+        importlib.reload(agents.safety.agent)
+        importlib.reload(agents.story_question_answerer.agent)
+        
+        from agents.safety.agent import root_agent as fresh_safety_agent
+        from agents.story_question_answerer.agent import root_agent as fresh_qa_agent
+
+        # Safety -> QA
+        return SequentialAgent(
+            name="story_qa_orchestrator",
+            description="QA pipeline: safety → question answerer",
+            sub_agents=[
+                fresh_safety_agent,
+                fresh_qa_agent,
+            ],
+        )
+
+    # Default: Create Mode
     if enable_refinement:
         return story_orchestrator
     else:

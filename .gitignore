@@ -56,6 +56,7 @@ htmlcov/
 *.db
 *.sqlite
 *.sqlite3
+story_library.json
 
 # Temporary files
 *.tmp
