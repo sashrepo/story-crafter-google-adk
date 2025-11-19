@@ -82,7 +82,7 @@ story-crafter-adk/
 | Character Forge | Design characters | `uv run adk run agents/character_forge` |
 | Plot Architect | Structure plots | `uv run adk run agents/plot_architect` |
 | Story Writer | Write narrative prose | `uv run adk run agents/story_writer` |
-| Art Director | Generate illustration prompts | `uv run adk run agents/art_director` |
+| Story Quality | Review and refine stories | `uv run adk run agents/story_quality_loop` |
 | **Orchestrator** | **Run all agents together** | `uv run adk run agents/orchestrator/story_orchestrator` |
 
 ## 🐛 Troubleshooting

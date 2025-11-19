@@ -136,14 +136,14 @@ story-crafter-adk/
 │   ├── character_forge/      # Designs characters
 │   ├── plot_architect/       # Structures plots
 │   ├── story_writer/         # Writes narrative prose
-│   └── art_director/         # Generates illustration prompts
+│   └── story_quality_loop/   # Reviews and refines stories
 ├── models/                    # Pydantic data models
 │   ├── intent.py             # UserIntent model
 │   ├── world.py              # WorldModel
 │   ├── character.py          # CharacterModel
 │   ├── plot.py               # PlotModel
 │   ├── story.py              # StoryModel
-│   └── artwork.py            # ArtworkModel, IllustrationPrompt
+│   └── story_feedback.py     # FeedbackModel
 ├── orchestrator/              # Multi-agent orchestration
 │   └── story_orchestrator/   # Sequential + parallel workflow
 ├── pyproject.toml            # Project configuration
@@ -168,9 +168,7 @@ User Request
     ↓
 [Story Writer Agent] → Generates narrative prose
     ↓
-[Art Director Agent] → Creates illustration prompts
-    ↓
-Complete Story with Artwork
+Complete Story with Quality Check
 ```
 
 ### Key Features
@@ -212,7 +210,6 @@ All agents produce structured outputs using Pydantic models:
 - **CharacterModel**: Name, species, role, traits, strengths, weaknesses, motivations, goals
 - **PlotModel**: Setup, conflict, rising action, climax, resolution, themes
 - **StoryModel**: Title, text, word count, reading time, tone, reading level
-- **ArtworkModel**: Overall style, color palette, medium, illustration prompts
 
 ## 🧪 Development
 
@@ -273,16 +270,6 @@ uv run ruff check .
     "text": "Once upon a time, in the shimmering waters of Tumble Reef...",
     "word_count": 650,
     "estimated_reading_time_minutes": 5
-  },
-  "artwork": {
-    "overall_style": "Soft watercolor with flowing lines and luminous quality",
-    "illustrations": [
-      {
-        "scene_description": "Marina practicing tumbles in the bioluminescent garden",
-        "visual_prompt": "Medium shot showing a young mermaid with flowing blue hair..."
-      }
-      // ...
-    ]
   }
 }
 ```

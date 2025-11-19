@@ -19,14 +19,14 @@ story-crafter-adk/
 │   ├── character_forge/            # Designs multi-dimensional characters
 │   ├── plot_architect/             # Structures compelling narratives
 │   ├── story_writer/               # Writes engaging prose
-│   └── art_director/               # Generates illustration prompts
+│   └── story_quality_loop/         # Reviews and refines stories
 ├── models/                          # Pydantic Data Models
 │   ├── intent.py                   # UserIntent
 │   ├── world.py                    # WorldModel
 │   ├── character.py                # CharacterModel
 │   ├── plot.py                     # PlotModel
 │   ├── story.py                    # StoryModel
-│   └── artwork.py                  # ArtworkModel, IllustrationPrompt
+│   └── story_feedback.py           # FeedbackModel
 ├── orchestrator/                    # Multi-Agent Coordination
 │   └── story_orchestrator/         # Sequential + Parallel workflow
 ├── example.py                       # Complete usage example
@@ -91,9 +91,9 @@ User Request (natural language)
          ↓
     Complete narrative prose
          ↓
-    [Art Director Agent]
+    [Story Quality Loop]
          ↓
-    Illustration prompts
+    Review and refine story
          ↓
     ✅ Complete Story Package
 ```

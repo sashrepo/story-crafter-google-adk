@@ -1,7 +1,7 @@
 """
 ADK-based Story Orchestrator for Story Crafter.
 
-This module uses Google ADK's Sequential and Parallel workflow agents to
+This module uses Google ADK's Sequential, Parallel, and Loop workflow agents to
 coordinate story generation with optimal performance.
 
 Workflow:
@@ -10,7 +10,10 @@ Workflow:
    - Worldbuilder Agent
    - Character Forge Agent  
    - Plot Architect Agent
-3. Story Writer Agent (sequential)
+3. Story Writer Agent (sequential) - creates initial draft
+4. Story Quality Loop (max 3 iterations):
+   - Critic Agent: reviews and approves or provides feedback
+   - Refiner Agent: revises story or exits loop when approved
 
 USAGE (CLI):
     adk run orchestrator/story_orchestrator
@@ -40,6 +43,7 @@ from agents.worldbuilder.agent import root_agent as worldbuilder_agent
 from agents.character_forge.agent import root_agent as character_forge_agent
 from agents.plot_architect.agent import root_agent as plot_architect_agent
 from agents.story_writer.agent import root_agent as story_writer_agent
+from agents.story_quality_loop.agent import story_quality_loop
 
 # Optional model imports for type hints
 from models.intent import UserIntent
@@ -68,8 +72,13 @@ parallel_content_generation = ParallelAgent(
 # --------------------------------------------------------------------
 story_orchestrator = SequentialAgent(
     name="story_orchestrator",
-    description="Top-level orchestrator agent for full story generation",
-    sub_agents=[user_intent_agent, parallel_content_generation, story_writer_agent],
+    description="Top-level orchestrator: intent → content → writer → quality loop with iterative refinement",
+    sub_agents=[
+        user_intent_agent,
+        parallel_content_generation,
+        story_writer_agent,
+        story_quality_loop,  # LoopAgent with critic + refiner (max 3 iterations)
+    ],
 )
 
 

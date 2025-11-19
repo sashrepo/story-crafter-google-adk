@@ -26,6 +26,7 @@ try:
     import agents.character_forge.agent
     import agents.plot_architect.agent
     import agents.story_writer.agent
+    import agents.story_quality_loop.agent
     
     # Reload modules to ensure fresh clients for each run
     importlib.reload(agents.user_intent.agent)
@@ -33,6 +34,7 @@ try:
     importlib.reload(agents.character_forge.agent)
     importlib.reload(agents.plot_architect.agent)
     importlib.reload(agents.story_writer.agent)
+    importlib.reload(agents.story_quality_loop.agent)
     importlib.reload(agents.orchestrator.story_orchestrator.agent)
     
     from agents.orchestrator.story_orchestrator.agent import story_orchestrator
@@ -70,7 +72,8 @@ with st.sidebar:
     - 🌍 **Worldbuilder**: Creates the setting
     - 👥 **Character Forge**: Creates characters
     - 📈 **Plot Architect**: Structures the narrative
-    - ✍️ **Story Writer**: Writes the content
+    - ✍️ **Story Writer**: Creates initial draft
+    - 🔁 **Quality Loop**: Reviews & refines (max 3 iterations)
     """)
 
     st.markdown("---")
@@ -107,7 +110,7 @@ if generate_btn and user_request:
     if not os.environ.get("GOOGLE_API_KEY"):
         st.error("Please set your Google API Key in the sidebar.")
     else:
-        with st.spinner("🤖 Orchestrating agents... (This may take 1-2 minutes)"):
+        with st.spinner("🤖 Generating story with quality refinement... (This may take 2-3 minutes)"):
             try:
                 # Setup Runner
                 runner = Runner(
@@ -157,6 +160,9 @@ if generate_btn and user_request:
                 with results_placeholder:
                     st.markdown("### 📘 Generated Story Output")
                     
+                    iteration_count = 0
+                    critique_texts = []
+                    
                     for event in events:
                         # Display event content
                         if hasattr(event, 'content') and event.content:
@@ -171,10 +177,34 @@ if generate_btn and user_request:
                             
                             if content_text.strip():
                                 agent_name = getattr(event, 'author', 'Unknown Agent')
-                                with st.expander(f"Output from: **{agent_name}**", expanded=True):
-                                    st.markdown(content_text)
+                                
+                                # Special handling for loop agents
+                                if agent_name == "quality_critic":
+                                    iteration_count += 1
+                                    critique_texts.append(content_text)
+                                    if "APPROVED" in content_text:
+                                        st.success(f"✅ Story approved after {iteration_count} iteration(s)!")
+                                    else:
+                                        st.warning(f"🔄 Iteration {iteration_count}: Refining story based on feedback...")
+                                    with st.expander(f"Critique #{iteration_count}", expanded=False):
+                                        st.markdown(content_text)
+                                
+                                elif agent_name == "story_refiner":
+                                    # Only show refined versions
+                                    with st.expander(f"📝 Refined Story (Iteration {iteration_count})", expanded=(iteration_count == len(critique_texts))):
+                                        st.markdown(content_text)
+                                
+                                elif agent_name == "story_writer_agent":
+                                    # Initial draft
+                                    with st.expander(f"📝 Initial Story Draft", expanded=False):
+                                        st.markdown(content_text)
+                                
+                                else:
+                                    # Other agents (intent, world, character, plot)
+                                    with st.expander(f"Output from: **{agent_name}**", expanded=False):
+                                        st.markdown(content_text)
 
-                st.success("Generation Complete!")
+                st.success(f"✨ Story Generation Complete! ({iteration_count} quality iteration(s))")
                     
             except Exception as e:
                 st.error(f"An error occurred: {str(e)}")
