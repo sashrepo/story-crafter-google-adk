@@ -4,7 +4,7 @@ import urllib.request
 import urllib.error
 
 # Use environment variable for the API key
-PERSPECTIVE_API_KEY = os.environ.get("PERSPECTIVE_API_KEY")
+PERSPECTIVE_API_KEY = os.environ.get("GOOGLE_API_KEY")
 API_URL = "https://commentanalyzer.googleapis.com/v1alpha1/comments:analyze"
 
 class PerspectiveError(Exception):
