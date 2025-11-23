@@ -45,8 +45,55 @@ export GOOGLE_API_KEY="your-api-key-here"
 
 Or create a `.env` file:
 ```bash
-echo "GOOGLE_API_KEY=your-api-key-here" > .env
+cp .env.example .env
+# Edit .env and add your GOOGLE_API_KEY
 ```
+
+### Optional: Vertex AI Memory Bank Integration
+
+By default, Story Crafter uses in-memory storage for sessions (which resets on app restart). For **persistent, long-term memory and session storage**, you can integrate with **Vertex AI Memory Bank**.
+
+#### Prerequisites for Vertex AI:
+1. A Google Cloud Platform (GCP) project with billing enabled
+2. Vertex AI API enabled
+3. A Vertex AI Agent Engine created in your project
+
+#### Setup Steps:
+
+1. Enable Vertex AI API in your GCP project:
+```bash
+gcloud services enable aiplatform.googleapis.com
+```
+
+2. Create a Vertex AI Agent Engine (replace with your values):
+```bash
+# This can be done through GCP Console or CLI
+# See: https://cloud.google.com/vertex-ai/docs/agents/overview
+```
+
+3. Configure environment variables in your `.env` file:
+```bash
+# Required for any usage
+GOOGLE_API_KEY=your-google-api-key-here
+
+# Optional: Enable Vertex AI Memory Bank
+GOOGLE_CLOUD_PROJECT=your-gcp-project-id
+GOOGLE_CLOUD_LOCATION=us-central1
+VERTEX_AGENT_ENGINE_ID=your-agent-engine-id
+```
+
+4. Run the setup script (optional helper):
+```bash
+python setup_gcp_resources.py
+```
+
+**Benefits of Vertex AI Memory Bank:**
+- ✅ Persistent session storage across app restarts
+- ✅ Long-term memory of story elements, characters, and worlds
+- ✅ Multi-user support with proper isolation
+- ✅ Automatic scaling and management by Google Cloud
+
+For detailed setup instructions, see **[VERTEX_AI_SETUP.md](./VERTEX_AI_SETUP.md)**.
 
 ## 🎨 Usage
 

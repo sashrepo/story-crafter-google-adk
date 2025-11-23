@@ -8,9 +8,9 @@ on UI concerns.
 
 import json
 import uuid
-from typing import AsyncGenerator, Dict, Any, Optional
+from typing import AsyncGenerator, Dict, Any, Optional, Union
 from google.adk import Runner
-from google.adk.sessions import InMemorySessionService
+from google.adk.sessions import InMemorySessionService, VertexAiSessionService
 from google.genai import types
 
 
@@ -36,17 +36,18 @@ class StoryEngine:
     
     This class encapsulates:
     - Agent orchestration
-    - Session management
+    - Session management (supports both InMemory and Vertex AI)
     - Routing logic (create/edit/question)
     - Event streaming
     """
     
-    def __init__(self, session_service: Optional[InMemorySessionService] = None):
+    def __init__(self, session_service: Optional[Union[InMemorySessionService, VertexAiSessionService]] = None):
         """
         Initialize the Story Engine.
         
         Args:
-            session_service: Optional session service. If not provided, creates a new one.
+            session_service: Optional session service (InMemory or Vertex AI). 
+                           If not provided, creates a new InMemorySessionService.
         """
         self.session_service = session_service or InMemorySessionService()
         

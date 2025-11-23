@@ -16,7 +16,9 @@ sys.path.insert(0, str(project_root))
 
 # Import ADK components and services
 try:
-    from google.adk.sessions import InMemorySessionService
+    # Import backend services
+    from services.story_engine import StoryEngine
+    from services.memory import get_session_service, get_memory_service
     
     # Import agent modules to reload them (ensures fresh clients)
     import agents.orchestrator.story_orchestrator.agent
@@ -44,26 +46,21 @@ try:
     importlib.reload(agents.orchestrator.story_orchestrator.agent)
     importlib.reload(agents.router.agent)
     
-    # Import backend services
-    from services.story_engine import StoryEngine
-    
 except ImportError as e:
     st.error(f"Failed to import required modules: {e}")
     st.info("Make sure you have installed the package dependencies.")
     st.stop()
 
 # Initialize Services - MUST be cached to persist across Streamlit reruns!
-@st.cache_resource
-def get_session_service():
-    """Create and cache the session service so it persists across Streamlit reruns."""
-    return InMemorySessionService()
+# Session and Memory services are now imported from services.memory module
+session_service = get_session_service()
+memory_service = get_memory_service()
 
 @st.cache_resource
 def get_story_engine():
-    """Create and cache the story engine."""
-    return StoryEngine(session_service=get_session_service())
+    """Create and cache the story engine with the session service."""
+    return StoryEngine(session_service=session_service)
 
-session_service = get_session_service()
 story_engine = get_story_engine()
 
 # Page config
