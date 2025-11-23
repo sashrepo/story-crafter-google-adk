@@ -2,8 +2,6 @@ import asyncio
 import streamlit as st
 import os
 import uuid
-import json
-import datetime
 from pathlib import Path
 import sys
 import importlib
@@ -16,13 +14,11 @@ load_dotenv()
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# Import ADK components
+# Import ADK components and services
 try:
-    from google.adk import Runner
     from google.adk.sessions import InMemorySessionService
-    from google.genai import types
     
-    # Import agent modules to reload them
+    # Import agent modules to reload them (ensures fresh clients)
     import agents.orchestrator.story_orchestrator.agent
     import agents.safety.agent
     import agents.user_intent.agent
@@ -48,21 +44,27 @@ try:
     importlib.reload(agents.orchestrator.story_orchestrator.agent)
     importlib.reload(agents.router.agent)
     
-    from agents.orchestrator.story_orchestrator.agent import get_orchestrator
-    from agents.router.agent import root_agent as router_agent
-    from services.perspective import SafetyViolationError
+    # Import backend services
+    from services.story_engine import StoryEngine
+    
 except ImportError as e:
     st.error(f"Failed to import required modules: {e}")
     st.info("Make sure you have installed the package dependencies.")
     st.stop()
 
-# Initialize Session Service - MUST be cached to persist across Streamlit reruns!
+# Initialize Services - MUST be cached to persist across Streamlit reruns!
 @st.cache_resource
 def get_session_service():
     """Create and cache the session service so it persists across Streamlit reruns."""
     return InMemorySessionService()
 
+@st.cache_resource
+def get_story_engine():
+    """Create and cache the story engine."""
+    return StoryEngine(session_service=get_session_service())
+
 session_service = get_session_service()
+story_engine = get_story_engine()
 
 # Page config
 st.set_page_config(
@@ -76,55 +78,9 @@ st.set_page_config(
 import theme
 theme.apply_google_kids_theme()
 
-# --- Helper Functions for Story Library ---
-LIBRARY_FILE = "story_library.json"
-
-def load_library():
-    if os.path.exists(LIBRARY_FILE):
-        try:
-            with open(LIBRARY_FILE, "r") as f:
-                return json.load(f)
-        except:
-            return []
-    return []
-
-def save_to_library(story_text, session_id, user_id):
-    library = load_library()
-    # Check if already exists (simple check)
-    for item in library:
-        if item['session_id'] == session_id and item['story_text'] == story_text:
-            return
-            
-    library.append({
-        "id": str(uuid.uuid4()),
-        "timestamp": datetime.datetime.now().isoformat(),
-        "session_id": session_id,
-        "user_id": user_id,
-        "story_text": story_text,
-        "snippet": story_text[:100] + "..."
-    })
-    with open(LIBRARY_FILE, "w") as f:
-        json.dump(library, f, indent=2)
-        
-    # Update session state immediately
-    st.session_state.library = library
-
-def render_library_list(container):
-    with container.container():
-        st.subheader("📚 Story Library")
-        library = st.session_state.get("library", load_library())
-        
-        if not library:
-            st.info("No approved stories yet.")
-        else:
-            for item in reversed(library):
-                with st.expander(f"{item['timestamp'][:16]} ({item['user_id']})"):
-                    st.markdown(item['story_text'])
-                    st.caption(f"Session: {item['session_id']}")
-
 # --- Session Management ---
-
 def init_session_state():
+    """Initialize Streamlit session state variables."""
     if "messages" not in st.session_state:
         st.session_state.messages = []
     if "user_id" not in st.session_state:
@@ -133,8 +89,6 @@ def init_session_state():
         st.session_state.session_id = str(uuid.uuid4())
     if "current_story" not in st.session_state:
         st.session_state.current_story = ""
-    if "library" not in st.session_state:
-        st.session_state.library = load_library()
 
 init_session_state()
 
@@ -169,12 +123,6 @@ with st.sidebar:
         value=True,
         help="Reviews and refines story up to 3 times."
     )
-    
-    st.divider()
-    
-    # Story Library - Use Placeholder
-    library_placeholder = st.empty()
-    render_library_list(library_placeholder)
 
 # --- Main Chat Interface ---
 
@@ -207,186 +155,143 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
             status_placeholder = st.status("✨ Magic in progress... ✨", expanded=True)
             
             # Variables to track state during streaming
-            state_tracker = {"final_story": ""}
-            iteration_count = [0]
+            state_tracker = {"final_story": "", "iteration_count": 0}
             
             async def run_chat_turn():
-                # Setup Session
                 user_id = st.session_state.user_id
                 session_id = st.session_state.session_id
                 
-                try:
-                    session = await session_service.create_session(
-                        app_name="agents",
-                        user_id=user_id,
-                        session_id=session_id
-                    )
-                except:
-                    session = await session_service.get_session(
-                        app_name="agents",
-                        user_id=user_id,
-                        session_id=session_id
-                    )
-                
-                # --- Routing Logic ---
-                mode = "create"
-                if st.session_state.current_story:
-                    status_placeholder.write("🧠 Analyzing request...")
-                    
-                    # Run Router Agent
-                    router_runner = Runner(
-                        agent=router_agent,
-                        app_name="agents",
-                        session_service=session_service
-                    )
-                    
-                    router_input = types.Content(role="user", parts=[types.Part(text=f"User Input: {prompt}")])
-                    
-                    router_response_text = ""
-                    async for event in router_runner.run_async(
-                        user_id=user_id,
-                        session_id=session_id, 
-                        new_message=router_input
-                    ):
-                         if hasattr(event, 'content') and isinstance(event.content, str):
-                             router_response_text += event.content
-                         elif hasattr(event, 'content') and hasattr(event.content, 'parts'):
-                             for part in event.content.parts:
-                                 router_response_text += part.text
-                    
-                    # Parse decision
-                    router_data = json.loads(router_response_text) if router_response_text.strip().startswith('{') else {}
-                    
-                    # Fallback if strict JSON fails, try simple string matching
-                    if "EDIT_STORY" in router_response_text:
-                        mode = "edit"
-                    elif "QUESTION" in router_response_text:
-                        mode = "question"
-                    elif "NEW_STORY" in router_response_text:
-                        mode = "create"
-                        st.session_state.current_story = "" # Reset for new story
-                        
-                    status_placeholder.write(f"Target: {mode.upper()}")
-
-                orchestrator = get_orchestrator(enable_refinement=enable_refinement, mode=mode)
-                runner = Runner(
-                    agent=orchestrator,
-                    app_name="agents",
-                    session_service=session_service
-                )
-                
-                user_message = types.Content(
-                    role="user",
-                    parts=[types.Part(text=prompt)]
-                )
-                
-                # Stream responses
-                async for event in runner.run_async(
+                # Process the story request using the backend engine
+                async for event in story_engine.process_story_request(
+                    prompt=prompt,
                     user_id=user_id,
                     session_id=session_id,
-                    new_message=user_message
+                    current_story=st.session_state.current_story,
+                    enable_refinement=enable_refinement
                 ):
-                    if hasattr(event, 'content') and event.content:
-                        content_text = ""
-                        if hasattr(event.content, 'parts'):
-                            for part in event.content.parts:
-                                if hasattr(part, 'text'): content_text += part.text
-                        elif isinstance(event.content, str):
-                            content_text = event.content
+                    # Handle different event types
+                    if event.event_type == "status":
+                        status_placeholder.write(event.content)
+                        
+                    elif event.event_type == "critique":
+                        state_tracker["iteration_count"] = event.metadata.get("iteration", 0)
+                        status_placeholder.write(f"Quality Check #{state_tracker['iteration_count']}: {event.content[:50]}...")
+                        
+                        # Render immediately in collapsed expander
+                        with st.chat_message("assistant", avatar="🧐"):
+                            with st.expander(f"🔍 Critique #{state_tracker['iteration_count']}", expanded=False):
+                                st.markdown(event.content)
+                        
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": event.content,
+                            "title": f"🔍 Critique #{state_tracker['iteration_count']}",
+                            "is_expander": True,
+                            "avatar": "🧐"
+                        })
+                        if event.metadata.get("approved"):
+                            status_placeholder.update(label="Story Approved!", state="complete")
                             
-                        if content_text.strip():
-                            agent_name = getattr(event, 'author', 'Unknown Agent')
-                            
-                            # Handle different agents
-                            if agent_name == "quality_critic":
-                                iteration_count[0] += 1
-                                status_placeholder.write(f"Quality Check #{iteration_count[0]}: {content_text[:50]}...")
-                                st.session_state.messages.append({
-                                    "role": "assistant", 
-                                    "content": content_text, 
-                                    "title": f"🔍 Critique #{iteration_count[0]}",
-                                    "is_expander": True,
-                                    "avatar": "🧐"
-                                })
-                                if "APPROVED" in content_text:
-                                    status_placeholder.update(label="Story Approved!", state="complete")
-                                
-                            elif agent_name == "story_refiner":
-                                status_placeholder.write(f"Refining Story (Iteration {iteration_count[0]})...")
-                                st.session_state.messages.append({
-                                    "role": "assistant",
-                                    "content": content_text,
-                                    "title": f"📝 Refined Draft (Iter {iteration_count[0]})",
-                                    "is_expander": True,
-                                    "avatar": "✍️"
-                                })
-                                state_tracker["final_story"] = content_text # Update candidate for final story
-
-                            elif agent_name == "story_writer_agent":
-                                status_placeholder.write("Drafting initial story...")
-                                st.session_state.messages.append({
-                                    "role": "assistant",
-                                    "content": content_text,
-                                    "title": "📝 Initial Draft",
-                                    "is_expander": True,
-                                    "avatar": "✍️"
-                                })
-                                state_tracker["final_story"] = content_text # Update candidate for final story
-                            
-                            elif agent_name == "story_editor_agent":
-                                status_placeholder.write("Editing story...")
-                                st.session_state.messages.append({
-                                    "role": "assistant",
-                                    "content": content_text,
-                                    "title": "📝 Edited Story",
-                                    "is_expander": True,
-                                    "avatar": "✍️"
-                                })
-                                state_tracker["final_story"] = content_text
-
-                            elif agent_name == "story_guide_agent":
-                                status_placeholder.write("Consulting Story Guide...")
-                                
-                                # Render the answer immediately
-                                with st.chat_message("assistant", avatar="🤖"):
-                                    st.markdown(f"### 🤔 Guide's Answer\n\n{content_text}")
-                                
-                                st.session_state.messages.append({
-                                    "role": "assistant",
-                                    "content": content_text,
-                                    "title": "🤔 Guide's Answer",
-                                    "is_expander": True,
-                                    "avatar": "🤖"
-                                })
-                                # Do NOT update final_story for Guide, as it's just an answer
-
-                            elif agent_name == "safety_agent":
-                                if "Content Rejected" in content_text:
-                                    st.error(f"🛡️ Safety Rejection: {content_text}")
-                                    st.session_state.messages.append({
-                                        "role": "assistant",
-                                        "content": f"❌ Safety Rejection: {content_text}",
-                                        "avatar": "🛡️"
-                                    })
-                                    return # Stop processing
-                                else:
-                                     status_placeholder.write("Safety check passed.")
-
-                            else:
-                                # Other agents (World, Character, Plot, etc.)
-                                status_placeholder.write(f"{agent_name} is thinking...")
-                                st.session_state.messages.append({
-                                    "role": "assistant",
-                                    "content": content_text,
-                                    "title": f"Output: {agent_name}",
-                                    "is_expander": True,
-                                    "avatar": "🤖"
-                                })
+                    elif event.event_type == "refined_story":
+                        status_placeholder.write(f"Refining Story (Iteration {state_tracker['iteration_count']})...")
+                        
+                        # Render immediately in collapsed expander
+                        with st.chat_message("assistant", avatar="✍️"):
+                            with st.expander(f"📝 Refined Draft (Iter {state_tracker['iteration_count']})", expanded=False):
+                                st.markdown(event.content)
+                        
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": event.content,
+                            "title": f"📝 Refined Draft (Iter {state_tracker['iteration_count']})",
+                            "is_expander": True,
+                            "avatar": "✍️"
+                        })
+                        state_tracker["final_story"] = event.content
+                        
+                    elif event.event_type == "draft_story":
+                        status_placeholder.write("Drafting initial story...")
+                        
+                        # Render immediately in collapsed expander
+                        with st.chat_message("assistant", avatar="✍️"):
+                            with st.expander("📝 Initial Draft", expanded=False):
+                                st.markdown(event.content)
+                        
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": event.content,
+                            "title": "📝 Initial Draft",
+                            "is_expander": True,
+                            "avatar": "✍️"
+                        })
+                        state_tracker["final_story"] = event.content
+                        
+                    elif event.event_type == "edited_story":
+                        status_placeholder.write("Editing story...")
+                        
+                        # Render immediately in collapsed expander
+                        with st.chat_message("assistant", avatar="✍️"):
+                            with st.expander("📝 Edited Story", expanded=False):
+                                st.markdown(event.content)
+                        
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": event.content,
+                            "title": "📝 Edited Story",
+                            "is_expander": True,
+                            "avatar": "✍️"
+                        })
+                        state_tracker["final_story"] = event.content
+                        
+                    elif event.event_type == "guide_answer":
+                        status_placeholder.write("Consulting Story Guide...")
+                        
+                        # Render the answer immediately in expanded format (user asked for this)
+                        with st.chat_message("assistant", avatar="🤖"):
+                            st.markdown(f"### 🤔 Guide's Answer\n\n{event.content}")
+                        
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": event.content,
+                            "title": "🤔 Guide's Answer",
+                            "is_expander": True,
+                            "avatar": "🤖"
+                        })
+                        
+                    elif event.event_type == "agent_output":
+                        status_placeholder.write(f"{event.agent_name} is thinking...")
+                        
+                        # Render immediately in collapsed expander
+                        with st.chat_message("assistant", avatar="🤖"):
+                            with st.expander(f"Output: {event.agent_name}", expanded=False):
+                                st.markdown(event.content)
+                        
+                        st.session_state.messages.append({
+                            "role": "assistant",
+                            "content": event.content,
+                            "title": f"Output: {event.agent_name}",
+                            "is_expander": True,
+                            "avatar": "🤖"
+                        })
+                        
+                    elif event.event_type == "error":
+                        if event.metadata.get("is_safety_violation"):
+                            st.error(f"🛡️ Safety Rejection: {event.content}")
+                            st.session_state.messages.append({
+                                "role": "assistant",
+                                "content": f"❌ Safety Rejection: {event.content}",
+                                "avatar": "🛡️"
+                            })
+                        else:
+                            raise Exception(event.content)
+                        return  # Stop processing
+                        
+                    elif event.event_type == "complete":
+                        status_placeholder.update(label="Generation Complete", state="complete", expanded=False)
 
             # Run the async loop
             try:
                 asyncio.run(run_chat_turn())
-                status_placeholder.update(label="Generation Complete", state="complete", expanded=False)
                 
                 # If we have a final story, show it clearly at the end
                 if state_tracker["final_story"]:
@@ -400,14 +305,8 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                         "avatar": "📖"
                     })
                     
-                    # Automatically save to library if it looks like a story
-                    if len(state_tracker["final_story"]) > 100:
-                        st.session_state.current_story = state_tracker["final_story"]
-                        save_to_library(state_tracker["final_story"], st.session_state.session_id, st.session_state.user_id)
-                        st.toast("Story saved to library!", icon="💾")
-                        
-                        # Force update the library list in sidebar
-                        render_library_list(library_placeholder)
+                    # Update current story for editing
+                    st.session_state.current_story = state_tracker["final_story"]
                         
             except Exception as e:
                 st.error(f"An error occurred: {e}")
