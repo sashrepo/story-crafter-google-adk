@@ -12,10 +12,14 @@ from typing import AsyncGenerator, Dict, Any, Optional
 from google.adk import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
+from pydantic import ValidationError
 
 # Import agent modules (factories)
 from agents.router import agent as router_module
 from agents.orchestrator.story_orchestrator import agent as orchestrator_module
+
+# Import models for structured parsing
+from models.routing import RoutingDecision
 
 
 class StoryEvent:
@@ -108,6 +112,7 @@ class StoryEngine:
             parts=[types.Part(text=f"User Input: {prompt}")]
         )
         
+        # Collect the router's response
         router_response_text = ""
         async for event in router_runner.run_async(
             user_id=user_id,
@@ -118,28 +123,63 @@ class StoryEngine:
                 router_response_text += event.content
             elif hasattr(event, 'content') and hasattr(event.content, 'parts'):
                 for part in event.content.parts:
-                    router_response_text += part.text
+                    if hasattr(part, 'text'):
+                        router_response_text += part.text
         
-        # Parse decision
-        mode = "create"  # Default
-        
-        # Try JSON parsing first
-        if router_response_text.strip().startswith('{'):
-            try:
-                router_data = json.loads(router_response_text)
-                mode = router_data.get('mode', 'create')
-            except json.JSONDecodeError:
-                pass
-        
-        # Fallback to string matching
-        if "EDIT_STORY" in router_response_text:
-            mode = "edit"
-        elif "QUESTION" in router_response_text:
-            mode = "question"
-        elif "NEW_STORY" in router_response_text:
-            mode = "create"
-        
+        # Parse the structured output properly
+        mode = self._parse_routing_decision(router_response_text)
         return mode
+    
+    def _parse_routing_decision(self, router_response: str) -> str:
+        """
+        Parse the router agent's structured output into a mode string.
+        
+        Args:
+            router_response: Raw JSON string from router agent
+            
+        Returns:
+            Mode string: "create", "edit", or "question"
+        """
+        # Mapping from RoutingDecision.decision to internal mode strings
+        decision_to_mode = {
+            "NEW_STORY": "create",
+            "EDIT_STORY": "edit",
+            "QUESTION": "question"
+        }
+        
+        # Try to parse as structured JSON output (from output_schema)
+        router_response = router_response.strip()
+        
+        if router_response.startswith('{'):
+            try:
+                # Parse the JSON response
+                router_data = json.loads(router_response)
+                
+                # Try to validate with Pydantic model for robustness
+                try:
+                    routing_decision = RoutingDecision(**router_data)
+                    return decision_to_mode.get(routing_decision.decision, "create")
+                except ValidationError:
+                    # Fallback: parse manually if validation fails
+                    decision = router_data.get('decision', 'NEW_STORY')
+                    return decision_to_mode.get(decision, "create")
+                    
+            except json.JSONDecodeError as e:
+                # Log the error but continue with fallback
+                print(f"Warning: Failed to parse router response as JSON: {e}")
+        
+        # Fallback: string matching (for backwards compatibility or malformed responses)
+        # This should rarely be hit if the router agent is working correctly
+        if "EDIT_STORY" in router_response:
+            return "edit"
+        elif "QUESTION" in router_response:
+            return "question"
+        elif "NEW_STORY" in router_response:
+            return "create"
+        
+        # Ultimate fallback: default to create mode
+        print(f"Warning: Could not parse routing decision from response: {router_response[:100]}")
+        return "create"
     
     async def process_story_request(
         self,

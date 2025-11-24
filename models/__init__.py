@@ -6,6 +6,7 @@ from models.character import CharacterModel
 from models.plot import PlotModel
 from models.story import StoryModel
 from models.story_feedback import StoryFeedback
+from models.routing import RoutingDecision
 
 __all__ = [
     "UserIntent", 
@@ -14,5 +15,6 @@ __all__ = [
     "PlotModel", 
     "StoryModel",
     "StoryFeedback",
+    "RoutingDecision",
 ]
 
