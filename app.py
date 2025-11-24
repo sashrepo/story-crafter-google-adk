@@ -4,7 +4,15 @@ import os
 import uuid
 from pathlib import Path
 import sys
+import logging
 from dotenv import load_dotenv
+
+# Configure logging for Cloud Run (outputs to stdout)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[logging.StreamHandler()]
+)
 
 # Load environment variables
 load_dotenv()
