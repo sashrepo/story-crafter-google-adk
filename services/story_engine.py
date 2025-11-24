@@ -11,6 +11,7 @@ import uuid
 from typing import AsyncGenerator, Dict, Any, Optional
 from google.adk import Runner
 from google.adk.sessions import InMemorySessionService
+from google.adk.plugins.logging_plugin import LoggingPlugin
 from google.genai import types
 from pydantic import ValidationError
 
@@ -100,11 +101,12 @@ class StoryEngine:
         # Create fresh router agent
         router_agent = router_module.create_agent()
         
-        # Run router agent
+        # Run router agent with logging plugin
         router_runner = Runner(
             agent=router_agent,
             app_name="agents",
-            session_service=self.session_service
+            session_service=self.session_service,
+            plugins=[LoggingPlugin()]  # Add logging plugin for observability
         )
         
         router_input = types.Content(
@@ -220,11 +222,12 @@ class StoryEngine:
                 mode=mode
             )
             
-            # Create runner
+            # Create runner with logging plugin
             runner = Runner(
                 agent=orchestrator,
                 app_name="agents",
-                session_service=self.session_service
+                session_service=self.session_service,
+                plugins=[LoggingPlugin()]  # Add logging plugin for observability
             )
             
             # Create user message
