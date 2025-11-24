@@ -1,60 +1,35 @@
 """
 Memory and Session Service Configuration for Story Crafter.
 
-This module handles the initialization of memory and session services,
-preferring Vertex AI Memory Bank for long-term storage if configured.
+This module provides simplified in-memory services for session management.
+Sessions are stored in memory and will reset when the application restarts.
 """
 
-import os
 import streamlit as st
-from google.adk.memory import VertexAiMemoryBankService, InMemoryMemoryService
-from google.adk.sessions import VertexAiSessionService, InMemorySessionService
+from google.adk.memory import InMemoryMemoryService
+from google.adk.sessions import InMemorySessionService
+
 
 @st.cache_resource
 def get_memory_service():
     """
-    Create and cache the memory service so it persists across Streamlit reruns.
+    Create and cache the in-memory service so it persists across Streamlit reruns.
     
     Returns:
-        BaseMemoryService: Configured memory service (Vertex AI or InMemory).
+        InMemoryMemoryService: In-memory storage for agent memory.
     """
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-    location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
-    agent_engine_id = os.environ.get("VERTEX_AGENT_ENGINE_ID")
-    
-    if project_id and agent_engine_id:
-        print(f"Initializing Vertex AI Memory Bank (Project: {project_id}, Engine: {agent_engine_id})")
-        return VertexAiMemoryBankService(
-            project=project_id,
-            location=location,
-            agent_engine_id=agent_engine_id
-        )
-    
-    print("VERTEX_AGENT_ENGINE_ID not set. Falling back to InMemoryMemoryService.")
+    print("Initializing InMemoryMemoryService")
     return InMemoryMemoryService()
 
 
 @st.cache_resource
 def get_session_service():
     """
-    Create and cache the session service for agent conversations.
-    Uses Vertex AI Session Service if configured, otherwise falls back to InMemory.
+    Create and cache the in-memory session service for agent conversations.
     
     Returns:
-        BaseSessionService: Configured session service (Vertex AI or InMemory).
+        InMemorySessionService: In-memory session storage.
     """
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-    location = os.environ.get("GOOGLE_CLOUD_LOCATION", "us-central1")
-    agent_engine_id = os.environ.get("VERTEX_AGENT_ENGINE_ID")
-    
-    if project_id and agent_engine_id:
-        print(f"Initializing Vertex AI Session Service (Project: {project_id}, Engine: {agent_engine_id})")
-        return VertexAiSessionService(
-            project=project_id,
-            location=location,
-            agent_engine_id=agent_engine_id
-        )
-    
-    print("VERTEX_AGENT_ENGINE_ID not set. Falling back to InMemorySessionService.")
+    print("Initializing InMemorySessionService")
     return InMemorySessionService()
 
