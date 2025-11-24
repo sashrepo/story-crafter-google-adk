@@ -24,13 +24,14 @@ from config import create_gemini_model
 from models.story_feedback import StoryFeedback
 
 
-# --------------------------------------------------------------------
-# Critic Agent - Reviews story and provides feedback
-# --------------------------------------------------------------------
-critic_agent = Agent(
-    name="quality_critic",
-    model=create_gemini_model("gemini-2.0-flash-thinking-exp"),
-    instruction="""You are a VERY STRICT, picky story critic. Your job is to push for perfection.
+def create_agent():
+    # --------------------------------------------------------------------
+    # Critic Agent - Reviews story and provides feedback
+    # --------------------------------------------------------------------
+    critic_agent = Agent(
+        name="quality_critic",
+        model=create_gemini_model("gemini-2.0-flash-thinking-exp"),
+        instruction="""You are a VERY STRICT, picky story critic. Your job is to push for perfection.
 
 Story: {current_story}
 
@@ -50,17 +51,17 @@ IMPORTANT TEST MODE INSTRUCTIONS:
 - Otherwise: Provide 2-3 specific, actionable suggestions for improvement.
 
 DO NOT add any other text if approving. Just the word: APPROVED""",
-    output_key="critique",
-)
+        output_key="critique",
+    )
 
 
-# --------------------------------------------------------------------
-# Refiner Agent - Revises story based on feedback or exits loop
-# --------------------------------------------------------------------
-refiner_agent = Agent(
-    name="story_refiner",
-    model=create_gemini_model("gemini-2.0-flash-exp"),
-    instruction="""You are a story refiner with ONE critical responsibility: check if the story is approved.
+    # --------------------------------------------------------------------
+    # Refiner Agent - Revises story based on feedback or exits loop
+    # --------------------------------------------------------------------
+    refiner_agent = Agent(
+        name="story_refiner",
+        model=create_gemini_model("gemini-2.0-flash-exp"),
+        instruction="""You are a story refiner with ONE critical responsibility: check if the story is approved.
 
 Critique: {critique}
 
@@ -84,23 +85,24 @@ When rewriting:
 - Output the complete revised story with title and all content
 
 REMEMBER: If the critique says "APPROVED", do NOT rewrite. Just call exit_loop!""",
-    output_key="current_story",  # Overwrites the story with refined version
-    tools=[FunctionTool(exit_loop)],
-)
+        output_key="current_story",  # Overwrites the story with refined version
+        tools=[FunctionTool(exit_loop)],
+    )
 
 
-# --------------------------------------------------------------------
-# Loop Agent - Runs Critic → Refiner repeatedly until approved
-# --------------------------------------------------------------------
-story_quality_loop = LoopAgent(
-    name="story_quality_loop",
-    sub_agents=[critic_agent, refiner_agent],
-    max_iterations=1,  # Prevents infinite loops
-)
+    # --------------------------------------------------------------------
+    # Loop Agent - Runs Critic → Refiner repeatedly until approved
+    # --------------------------------------------------------------------
+    story_quality_loop = LoopAgent(
+        name="story_quality_loop",
+        sub_agents=[critic_agent, refiner_agent],
+        max_iterations=1,  # Prevents infinite loops
+    )
+
+    return story_quality_loop
 
 
 # --------------------------------------------------------------------
 # CLI Compatibility
 # --------------------------------------------------------------------
-root_agent = story_quality_loop
-
+root_agent = create_agent()

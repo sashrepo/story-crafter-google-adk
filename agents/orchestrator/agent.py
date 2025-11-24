@@ -9,13 +9,12 @@ For CLI usage:
     adk web agents/  (will now find this root_agent)
 
 For Python usage:
-    from agents.orchestrator.story_orchestrator.agent import story_orchestrator
+    from agents.orchestrator.story_orchestrator.agent import root_agent as story_orchestrator
 """
 
-from agents.orchestrator.story_orchestrator.agent import story_orchestrator
+from agents.orchestrator.story_orchestrator.agent import root_agent as story_orchestrator
 
 # ADK web and CLI expect this name
 root_agent = story_orchestrator
 
 __all__ = ['root_agent', 'story_orchestrator']
-

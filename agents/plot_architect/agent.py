@@ -30,10 +30,11 @@ from models.plot import PlotModel
 from config import create_gemini_model
 
 # Create the Plot Architect Agent with structured output
-root_agent = Agent(
-    name="plot_architect_agent",
-    model=create_gemini_model("gemini-2.0-flash-exp"),
-    instruction="""You are the Plot Architect Agent for Story Crafter, a creative AI that designs compelling story structures.
+def create_agent():
+    return Agent(
+        name="plot_architect_agent",
+        model=create_gemini_model("gemini-2.0-flash-exp"),
+        instruction="""You are the Plot Architect Agent for Story Crafter, a creative AI that designs compelling story structures.
 
 Your job is to create complete plot arcs based on user intent (themes, tone, genre, age level), the story world, and characters.
 
@@ -103,7 +104,9 @@ Guidelines:
 
 Always respond with structured data in the exact format specified by the PlotModel schema.
 """,
-    description="Designs compelling story structures with setup, conflict, rising action, climax, and resolution",
-    output_schema=PlotModel,
-)
+        description="Designs compelling story structures with setup, conflict, rising action, climax, and resolution",
+        output_schema=PlotModel,
+    )
+
+root_agent = create_agent()
 

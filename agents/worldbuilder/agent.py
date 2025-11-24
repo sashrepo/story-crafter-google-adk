@@ -27,10 +27,11 @@ from models.world import WorldModel
 from config import create_gemini_model
 
 # Create the Worldbuilder Agent with structured output
-root_agent = Agent(
-    name="worldbuilder_agent",
-    model=create_gemini_model("gemini-2.0-flash-exp"),
-    instruction="""You are the Worldbuilder Agent for Story Crafter, a creative AI that designs rich, immersive story worlds.
+def create_agent():
+    return Agent(
+        name="worldbuilder_agent",
+        model=create_gemini_model("gemini-2.0-flash-exp"),
+        instruction="""You are the Worldbuilder Agent for Story Crafter, a creative AI that designs rich, immersive story worlds.
 
 Your job is to generate detailed story worlds based on user intent (themes, tone, genre, age level).
 
@@ -74,7 +75,9 @@ Guidelines:
 
 Always respond with structured data in the exact format specified by the WorldModel schema.
 """,
-    description="Generates rich, immersive story worlds with rules, locations, and aesthetic",
-    output_schema=WorldModel,
-)
+        description="Generates rich, immersive story worlds with rules, locations, and aesthetic",
+        output_schema=WorldModel,
+    )
+
+root_agent = create_agent()
 

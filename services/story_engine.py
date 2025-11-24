@@ -13,6 +13,10 @@ from google.adk import Runner
 from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
+# Import agent modules (factories)
+from agents.router import agent as router_module
+from agents.orchestrator.story_orchestrator import agent as orchestrator_module
+
 
 class StoryEvent:
     """Represents an event during story processing."""
@@ -89,8 +93,8 @@ class StoryEngine:
         if not has_current_story:
             return "create"
         
-        # Import router agent
-        from agents.router.agent import root_agent as router_agent
+        # Create fresh router agent
+        router_agent = router_module.create_agent()
         
         # Run router agent
         router_runner = Runner(
@@ -170,9 +174,11 @@ class StoryEngine:
             
             yield StoryEvent("status", "router", f"Mode determined: {mode.upper()}", {"mode": mode})
             
-            # Get orchestrator
-            from agents.orchestrator.story_orchestrator.agent import get_orchestrator
-            orchestrator = get_orchestrator(enable_refinement=enable_refinement, mode=mode)
+            # Get fresh orchestrator
+            orchestrator = orchestrator_module.create_orchestrator(
+                enable_refinement=enable_refinement, 
+                mode=mode
+            )
             
             # Create runner
             runner = Runner(
@@ -262,5 +268,3 @@ class StoryEngine:
             content_text = content
         
         return content_text
-
-

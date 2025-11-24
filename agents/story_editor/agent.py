@@ -14,10 +14,11 @@ sys.path.insert(0, str(project_root))
 
 from config import create_gemini_model
 
-root_agent = Agent(
-    name="story_editor_agent",
-    model=create_gemini_model("gemini-2.0-flash-exp"),
-    instruction="""You are a skilled Story Editor.
+def create_agent():
+    return Agent(
+        name="story_editor_agent",
+        model=create_gemini_model("gemini-2.0-flash-exp"),
+        instruction="""You are a skilled Story Editor.
 
 Your task is to rewrite the Current Story based on the User Request.
 
@@ -34,5 +35,7 @@ Instructions:
 4. Ensure the story remains coherent and grammatical.
 5. Output the COMPLETE updated story. Do not summarize or just show changes.
 """,
-    output_key="current_story",  # Update the story in context
-)
+        output_key="current_story",  # Update the story in context
+    )
+
+root_agent = create_agent()

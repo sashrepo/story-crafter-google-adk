@@ -30,11 +30,12 @@ from models.story import StoryModel
 from config import create_gemini_model
 
 # Create the Story Writer Agent - outputs plain text for quality loop
-root_agent = Agent(
-    name="story_writer_agent",
-    model=create_gemini_model("gemini-2.0-flash-exp"),
-    output_key="current_story",  # Store full story text for quality loop
-    instruction="""You are the Story Writer Agent for Story Crafter, a masterful storyteller who transforms structured story components into engaging narrative prose.
+def create_agent():
+    return Agent(
+        name="story_writer_agent",
+        model=create_gemini_model("gemini-2.0-flash-exp"),
+        output_key="current_story",  # Store full story text for quality loop
+        instruction="""You are the Story Writer Agent for Story Crafter, a masterful storyteller who transforms structured story components into engaging narrative prose.
 
 Your job is to write complete stories based on user intent, world details, character profiles, and plot structure.
 
@@ -83,6 +84,8 @@ NARRATIVE TECHNIQUES:
 
 CRITICAL: Write the COMPLETE STORY TEXT. Make it beautiful, polished prose ready to be read aloud.
 """,
-    description="Transforms structured story components into engaging narrative prose with proper pacing, dialogue, and age-appropriate language",
-)
+        description="Transforms structured story components into engaging narrative prose with proper pacing, dialogue, and age-appropriate language",
+    )
+
+root_agent = create_agent()
 

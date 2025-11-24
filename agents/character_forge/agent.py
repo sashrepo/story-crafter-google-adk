@@ -26,10 +26,11 @@ sys.path.insert(0, str(project_root))
 from models.character import CharacterModel
 
 # Create the Character Forge Agent with structured output
-root_agent = Agent(
-    name="character_forge_agent",
-    model="gemini-2.0-flash-exp",
-    instruction="""You are the Character Forge Agent for Story Crafter, a creative AI that designs compelling, multi-dimensional story characters.
+def create_agent():
+    return Agent(
+        name="character_forge_agent",
+        model="gemini-2.0-flash-exp",
+        instruction="""You are the Character Forge Agent for Story Crafter, a creative AI that designs compelling, multi-dimensional story characters.
 
 Your job is to generate detailed characters based on user intent (themes, tone, genre, age level) and the story world.
 
@@ -103,7 +104,9 @@ Guidelines:
 
 Always respond with structured data in the exact format specified by the CharacterModel schema.
 """,
-    description="Generates rich, multi-dimensional characters with personality, motivations, and relationships",
-    output_schema=CharacterModel,
-)
+        description="Generates rich, multi-dimensional characters with personality, motivations, and relationships",
+        output_schema=CharacterModel,
+    )
+
+root_agent = create_agent()
 

@@ -4,7 +4,6 @@ import os
 import uuid
 from pathlib import Path
 import sys
-import importlib
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -18,33 +17,7 @@ sys.path.insert(0, str(project_root))
 try:
     # Import backend services
     from services.story_engine import StoryEngine
-    from services.memory import get_session_service, get_memory_service
-    
-    # Import agent modules to reload them (ensures fresh clients)
-    import agents.orchestrator.story_orchestrator.agent
-    import agents.safety.agent
-    import agents.user_intent.agent
-    import agents.worldbuilder.agent
-    import agents.character_forge.agent
-    import agents.plot_architect.agent
-    import agents.story_writer.agent
-    import agents.story_quality_loop.agent
-    import agents.router.agent
-    import agents.story_editor.agent
-    import agents.story_guide.agent
-    
-    # Reload modules to ensure fresh clients for each run
-    importlib.reload(agents.safety.agent)
-    importlib.reload(agents.user_intent.agent)
-    importlib.reload(agents.worldbuilder.agent)
-    importlib.reload(agents.character_forge.agent)
-    importlib.reload(agents.plot_architect.agent)
-    importlib.reload(agents.story_writer.agent)
-    importlib.reload(agents.story_quality_loop.agent)
-    importlib.reload(agents.story_editor.agent)
-    importlib.reload(agents.story_guide.agent)
-    importlib.reload(agents.orchestrator.story_orchestrator.agent)
-    importlib.reload(agents.router.agent)
+    from services.memory import get_session_service
     
 except ImportError as e:
     st.error(f"Failed to import required modules: {e}")
@@ -52,16 +25,15 @@ except ImportError as e:
     st.stop()
 
 # Initialize Services - MUST be cached to persist across Streamlit reruns!
-# Session and Memory services are now imported from services.memory module
+# Session service is imported from services.memory module
 session_service = get_session_service()
-memory_service = get_memory_service()
 
 @st.cache_resource
-def get_story_engine():
+def get_story_engine(_session_service):
     """Create and cache the story engine with the session service."""
-    return StoryEngine(session_service=session_service)
+    return StoryEngine(session_service=_session_service)
 
-story_engine = get_story_engine()
+story_engine = get_story_engine(session_service)
 
 # Page config
 st.set_page_config(

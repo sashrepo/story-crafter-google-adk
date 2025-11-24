@@ -24,10 +24,11 @@ class RoutingDecision(BaseModel):
         description="The classification of the user's request."
     )
 
-root_agent = Agent(
-    name="router_agent",
-    model=create_gemini_model("gemini-2.0-flash-exp"),
-    instruction="""You are a Router for a Storytelling AI.
+def create_agent():
+    return Agent(
+        name="router_agent",
+        model=create_gemini_model("gemini-2.0-flash-exp"),
+        instruction="""You are a Router for a Storytelling AI.
 
 Your job is to classify the User's Request (the latest message in the chat history) into one of three categories:
 
@@ -37,5 +38,7 @@ Your job is to classify the User's Request (the latest message in the chat histo
 
 Classify the request.
 """,
-    output_schema=RoutingDecision,
-)
+        output_schema=RoutingDecision,
+    )
+
+root_agent = create_agent()

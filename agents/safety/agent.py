@@ -93,7 +93,10 @@ class SafetyAgent(BaseAgent):
         )
 
 # Create the Safety Agent instance
-root_agent = SafetyAgent(
-    name="safety_agent",
-    description="Validates user input for safety using Perspective API (Deterministic).",
-)
+def create_agent():
+    return SafetyAgent(
+        name="safety_agent",
+        description="Validates user input for safety using Perspective API (Deterministic).",
+    )
+
+root_agent = create_agent()
