@@ -52,7 +52,7 @@ st.set_page_config(
 )
 
 # --- Theme ---
-import theme
+from ui import theme
 theme.apply_google_kids_theme()
 
 # --- Session Management ---

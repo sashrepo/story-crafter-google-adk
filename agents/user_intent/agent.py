@@ -23,7 +23,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from models.intent import UserIntent
-from config import create_gemini_model
+from services.llm import create_gemini_model
 
 def create_agent():
     return Agent(

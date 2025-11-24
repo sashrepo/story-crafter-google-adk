@@ -15,7 +15,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from config import create_gemini_model
+from services.llm import create_gemini_model
 from models.routing import RoutingDecision
 
 def create_agent():

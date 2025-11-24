@@ -20,7 +20,7 @@ sys.path.insert(0, str(project_root))
 
 from google.adk.agents import Agent, LoopAgent
 from google.adk.tools import FunctionTool, exit_loop
-from config import create_gemini_model
+from services.llm import create_gemini_model
 from models.story_feedback import StoryFeedback
 
 

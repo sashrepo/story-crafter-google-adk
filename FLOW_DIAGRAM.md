@@ -102,8 +102,8 @@ graph TD
     classDef decisionNode fill:#ECEFF1,stroke:#455A64,color:#263238,stroke-width:2px;
 
     %% Subgraphs
-    classDef parallel fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,stroke-dasharray: 5 5;
-    classDef loop fill:#F3E5F5,stroke:#8E24AA,stroke-width:2px,stroke-dasharray: 5 5;
+    classDef parallel fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,stroke-dasharray: 5 5,color:#1565C0;
+    classDef loop fill:#F3E5F5,stroke:#8E24AA,stroke-width:2px,stroke-dasharray: 5 5,color:#8E24AA;
 
     class ParallelGen parallel;
     class QualityLoop loop;

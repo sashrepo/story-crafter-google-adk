@@ -27,7 +27,7 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from models.story import StoryModel
-from config import create_gemini_model
+from services.llm import create_gemini_model
 
 # Create the Story Writer Agent - outputs plain text for quality loop
 def create_agent():
