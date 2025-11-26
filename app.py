@@ -1,3 +1,10 @@
+"""
+Story Crafter ADK - Streamlit Frontend
+
+A collaborative AI-powered story creation application using Google's
+Agent Development Kit (ADK) with Vertex AI Memory Bank integration.
+"""
+
 import asyncio
 import streamlit as st
 import os
@@ -7,7 +14,7 @@ import sys
 import logging
 from dotenv import load_dotenv
 
-# Configure logging for Cloud Run (outputs to stdout)
+# Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -21,27 +28,32 @@ load_dotenv()
 project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
-# Import ADK components and services
+# Import backend services
 try:
-    # Import backend services
     from services.story_engine import StoryEngine
-    from services.memory import get_session_service
-    
+    from services.memory import get_session_service, get_memory_service
 except ImportError as e:
     st.error(f"Failed to import required modules: {e}")
     st.info("Make sure you have installed the package dependencies.")
     st.stop()
 
-# Initialize Services - MUST be cached to persist across Streamlit reruns!
-# Session service is imported from services.memory module
+# Initialize Services (cached to persist across Streamlit reruns)
 session_service = get_session_service()
+memory_service = get_memory_service()
+
 
 @st.cache_resource
-def get_story_engine(_session_service):
-    """Create and cache the story engine with the session service."""
-    return StoryEngine(session_service=_session_service)
+def get_story_engine(_session_service, _memory_service):
+    """Create and cache the story engine."""
+    agent_engine_id = os.getenv("AGENT_ENGINE_ID") or os.getenv("MEMORY_BANK_ID")
+    return StoryEngine(
+        session_service=_session_service, 
+        memory_service=_memory_service,
+        agent_engine_id=agent_engine_id
+    )
 
-story_engine = get_story_engine(session_service)
+
+story_engine = get_story_engine(session_service, memory_service)
 
 # Page config
 st.set_page_config(
@@ -51,11 +63,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- Theme ---
+# Theme
 from ui import theme
 theme.apply_google_kids_theme()
 
-# --- Session Management ---
+
 def init_session_state():
     """Initialize Streamlit session state variables."""
     if "messages" not in st.session_state:
@@ -67,6 +79,7 @@ def init_session_state():
     if "current_story" not in st.session_state:
         st.session_state.current_story = ""
 
+
 init_session_state()
 
 # --- Sidebar ---
@@ -74,22 +87,42 @@ with st.sidebar:
     theme.render_header()
     theme.render_custom_title("Story Controls")
     
-    # User & Session Config
+    # User Config
     st.subheader("👤 Identity")
     new_user_id = st.text_input("User ID", value=st.session_state.user_id)
     if new_user_id != st.session_state.user_id:
         st.session_state.user_id = new_user_id
-        
-    new_session_id = st.text_input("Session ID", value=st.session_state.session_id)
-    if new_session_id != st.session_state.session_id:
-        st.session_state.session_id = new_session_id
-        st.session_state.messages = [] # Clear chat on manual session change
-        st.rerun()
 
     if st.button("🔄 New Conversation", type="primary"):
         st.session_state.session_id = str(uuid.uuid4())
         st.session_state.messages = []
         st.rerun()
+
+    # Memory Bank
+    st.subheader("🧠 Memory Bank")
+    if st.button("🔍 Check Memories"):
+        with st.spinner("Searching memories..."):
+            try:
+                agent_engine_id = os.getenv("AGENT_ENGINE_ID") or os.getenv("MEMORY_BANK_ID")
+                
+                async def fetch_memories():
+                    return await memory_service.search_memory(
+                        query="*",
+                        app_name=agent_engine_id or "agents",
+                        user_id=st.session_state.user_id
+                    )
+                
+                response = asyncio.run(fetch_memories())
+                
+                if hasattr(response, 'memories') and response.memories:
+                    st.success(f"Found {len(response.memories)} memories:")
+                    for m in response.memories:
+                        st.info(m)
+                else:
+                    st.warning("No memories found yet. (They may take 5-10 mins to appear)")
+                    
+            except Exception as e:
+                st.error(f"Failed to fetch memories: {e}")
 
     st.divider()
     
@@ -102,43 +135,37 @@ with st.sidebar:
     )
 
 # --- Main Chat Interface ---
-
 theme.render_header()
 theme.render_custom_title("Story Crafter Chat", "Collaborate with AI agents to build your story.")
-
 
 # Display Chat History
 for message in st.session_state.messages:
     with st.chat_message(message["role"], avatar=message.get("avatar")):
         if message.get("is_expander"):
-             with st.expander(message["title"], expanded=False):
-                 st.markdown(message["content"])
+            with st.expander(message["title"], expanded=False):
+                st.markdown(message["content"])
         else:
             st.markdown(message["content"])
 
 # Handle Input
 if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
-    # 1. Add User Message
+    # Add User Message
     st.session_state.messages.append({"role": "user", "content": prompt, "avatar": "👤"})
     with st.chat_message("user", avatar="👤"):
         st.markdown(prompt)
 
-    # 2. Run Agent Process
+    # Run Agent Process
     if not os.environ.get("GOOGLE_API_KEY"):
         st.error("Please set your Google API Key in the environment or sidebar.")
     else:
         with st.chat_message("assistant", avatar="🤖"):
-            response_placeholder = st.empty()
             status_placeholder = st.status("✨ Magic in progress... ✨", expanded=True)
-            
-            # Variables to track state during streaming
             state_tracker = {"final_story": "", "iteration_count": 0}
             
             async def run_chat_turn():
                 user_id = st.session_state.user_id
                 session_id = st.session_state.session_id
                 
-                # Process the story request using the backend engine
                 async for event in story_engine.process_story_request(
                     prompt=prompt,
                     user_id=user_id,
@@ -146,7 +173,6 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                     current_story=st.session_state.current_story,
                     enable_refinement=enable_refinement
                 ):
-                    # Handle different event types
                     if event.event_type == "status":
                         status_placeholder.write(event.content)
                         
@@ -154,7 +180,6 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                         state_tracker["iteration_count"] = event.metadata.get("iteration", 0)
                         status_placeholder.write(f"Quality Check #{state_tracker['iteration_count']}: {event.content[:50]}...")
                         
-                        # Render immediately in collapsed expander
                         with st.chat_message("assistant", avatar="🧐"):
                             with st.expander(f"🔍 Critique #{state_tracker['iteration_count']}", expanded=False):
                                 st.markdown(event.content)
@@ -172,7 +197,6 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                     elif event.event_type == "refined_story":
                         status_placeholder.write(f"Refining Story (Iteration {state_tracker['iteration_count']})...")
                         
-                        # Render immediately in collapsed expander
                         with st.chat_message("assistant", avatar="✍️"):
                             with st.expander(f"📝 Refined Draft (Iter {state_tracker['iteration_count']})", expanded=False):
                                 st.markdown(event.content)
@@ -189,7 +213,6 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                     elif event.event_type == "draft_story":
                         status_placeholder.write("Drafting initial story...")
                         
-                        # Render immediately in collapsed expander
                         with st.chat_message("assistant", avatar="✍️"):
                             with st.expander("📝 Initial Draft", expanded=False):
                                 st.markdown(event.content)
@@ -206,7 +229,6 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                     elif event.event_type == "edited_story":
                         status_placeholder.write("Editing story...")
                         
-                        # Render immediately in collapsed expander
                         with st.chat_message("assistant", avatar="✍️"):
                             with st.expander("📝 Edited Story", expanded=False):
                                 st.markdown(event.content)
@@ -223,7 +245,6 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                     elif event.event_type == "guide_answer":
                         status_placeholder.write("Consulting Story Guide...")
                         
-                        # Render the answer immediately in expanded format (user asked for this)
                         with st.chat_message("assistant", avatar="🤖"):
                             st.markdown(f"### 🤔 Guide's Answer\n\n{event.content}")
                         
@@ -238,7 +259,6 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                     elif event.event_type == "agent_output":
                         status_placeholder.write(f"{event.agent_name} is thinking...")
                         
-                        # Render immediately in collapsed expander
                         with st.chat_message("assistant", avatar="🤖"):
                             with st.expander(f"Output: {event.agent_name}", expanded=False):
                                 st.markdown(event.content)
@@ -261,7 +281,7 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                             })
                         else:
                             raise Exception(event.content)
-                        return  # Stop processing
+                        return
                         
                     elif event.event_type == "complete":
                         status_placeholder.update(label="Generation Complete", state="complete", expanded=False)
@@ -270,19 +290,16 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
             try:
                 asyncio.run(run_chat_turn())
                 
-                # If we have a final story, show it clearly at the end
                 if state_tracker["final_story"]:
                     st.markdown("### ✨ Final Story")
                     st.markdown(state_tracker["final_story"])
                     
-                    # Save to history as main response
                     st.session_state.messages.append({
                         "role": "assistant",
                         "content": state_tracker["final_story"],
                         "avatar": "📖"
                     })
                     
-                    # Update current story for editing
                     st.session_state.current_story = state_tracker["final_story"]
                         
             except Exception as e:

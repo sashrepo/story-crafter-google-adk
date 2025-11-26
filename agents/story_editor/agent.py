@@ -2,6 +2,7 @@
 Story Editor Agent for Story Crafter.
 
 This agent edits an existing story based on user feedback/instructions.
+The current story is passed in the user message, not via session state.
 """
 
 from google.adk.agents import Agent
@@ -20,16 +21,14 @@ def create_agent():
         model=create_gemini_model("gemini-2.0-flash-exp"),
         instruction="""You are a skilled Story Editor.
 
-Your task is to rewrite the Current Story based on the User Request.
+Your task is to edit the provided story based on the user's request.
 
-Current Story:
-{current_story}
-
-User Request:
-(See the latest message in the chat history)
+The user message will contain:
+1. The CURRENT STORY to edit (marked with "CURRENT STORY:")
+2. The EDIT REQUEST describing what changes to make (marked with "EDIT REQUEST:")
 
 Instructions:
-1. Read the current story and the user's request carefully.
+1. Read the current story and the edit request carefully.
 2. Rewrite the story to incorporate the requested changes.
 3. Maintain the original style and tone unless asked to change it.
 4. Ensure the story remains coherent and grammatical.

@@ -2,6 +2,7 @@
 Story Guide Agent for Story Crafter.
 
 This agent acts as an expert guide, answering questions about the story without modifying it.
+The story context is passed in the user message, not via session state.
 """
 
 from google.adk.agents import Agent
@@ -20,13 +21,11 @@ def create_agent():
         model=create_gemini_model("gemini-2.0-flash-exp"),
         instruction="""You are a Story Expert and Guide.
 
-Your task is to answer the User's question about the Current Story.
+Your task is to answer questions about the provided story.
 
-Current Story:
-{current_story}
-
-User Question:
-(See the latest message in the chat history)
+The user message will contain:
+1. The STORY CONTEXT (marked with "STORY CONTEXT:")
+2. The QUESTION to answer (marked with "QUESTION:")
 
 Instructions:
 1. Answer the question accurately based ONLY on the story provided.
