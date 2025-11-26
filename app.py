@@ -162,6 +162,21 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
             status_placeholder = st.status("✨ Magic in progress... ✨", expanded=True)
             state_tracker = {"final_story": "", "iteration_count": 0}
             
+            def show_expander_message(avatar: str, title: str, content: str, is_final: bool = False):
+                """Display an expander message and save to session state."""
+                with st.chat_message("assistant", avatar=avatar):
+                    with st.expander(title, expanded=False):
+                        st.markdown(content)
+                st.session_state.messages.append({
+                    "role": "assistant",
+                    "content": content,
+                    "title": title,
+                    "is_expander": True,
+                    "avatar": avatar
+                })
+                if is_final:
+                    state_tracker["final_story"] = content
+
             async def run_chat_turn():
                 user_id = st.session_state.user_id
                 session_id = st.session_state.session_id
@@ -179,75 +194,26 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                     elif event.event_type == "critique":
                         state_tracker["iteration_count"] = event.metadata.get("iteration", 0)
                         status_placeholder.write(f"Quality Check #{state_tracker['iteration_count']}: {event.content[:50]}...")
-                        
-                        with st.chat_message("assistant", avatar="🧐"):
-                            with st.expander(f"🔍 Critique #{state_tracker['iteration_count']}", expanded=False):
-                                st.markdown(event.content)
-                        
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": event.content,
-                            "title": f"🔍 Critique #{state_tracker['iteration_count']}",
-                            "is_expander": True,
-                            "avatar": "🧐"
-                        })
+                        show_expander_message("🧐", f"🔍 Critique #{state_tracker['iteration_count']}", event.content)
                         if event.metadata.get("approved"):
                             status_placeholder.update(label="Story Approved!", state="complete")
                             
                     elif event.event_type == "refined_story":
                         status_placeholder.write(f"Refining Story (Iteration {state_tracker['iteration_count']})...")
-                        
-                        with st.chat_message("assistant", avatar="✍️"):
-                            with st.expander(f"📝 Refined Draft (Iter {state_tracker['iteration_count']})", expanded=False):
-                                st.markdown(event.content)
-                        
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": event.content,
-                            "title": f"📝 Refined Draft (Iter {state_tracker['iteration_count']})",
-                            "is_expander": True,
-                            "avatar": "✍️"
-                        })
-                        state_tracker["final_story"] = event.content
+                        show_expander_message("✍️", f"📝 Refined Draft (Iter {state_tracker['iteration_count']})", event.content, is_final=True)
                         
                     elif event.event_type == "draft_story":
                         status_placeholder.write("Drafting initial story...")
-                        
-                        with st.chat_message("assistant", avatar="✍️"):
-                            with st.expander("📝 Initial Draft", expanded=False):
-                                st.markdown(event.content)
-                        
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": event.content,
-                            "title": "📝 Initial Draft",
-                            "is_expander": True,
-                            "avatar": "✍️"
-                        })
-                        state_tracker["final_story"] = event.content
+                        show_expander_message("✍️", "📝 Initial Draft", event.content, is_final=True)
                         
                     elif event.event_type == "edited_story":
                         status_placeholder.write("Editing story...")
-                        
-                        with st.chat_message("assistant", avatar="✍️"):
-                            with st.expander("📝 Edited Story", expanded=False):
-                                st.markdown(event.content)
-                        
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": event.content,
-                            "title": "📝 Edited Story",
-                            "is_expander": True,
-                            "avatar": "✍️"
-                        })
-                        state_tracker["final_story"] = event.content
+                        show_expander_message("✍️", "📝 Edited Story", event.content, is_final=True)
                         
                     elif event.event_type == "guide_answer":
                         status_placeholder.write("Consulting Story Guide...")
-                        
                         with st.chat_message("assistant", avatar="🤖"):
                             st.markdown(f"### 🤔 Guide's Answer\n\n{event.content}")
-                        
                         st.session_state.messages.append({
                             "role": "assistant",
                             "content": event.content,
@@ -258,18 +224,7 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                         
                     elif event.event_type == "agent_output":
                         status_placeholder.write(f"{event.agent_name} is thinking...")
-                        
-                        with st.chat_message("assistant", avatar="🤖"):
-                            with st.expander(f"Output: {event.agent_name}", expanded=False):
-                                st.markdown(event.content)
-                        
-                        st.session_state.messages.append({
-                            "role": "assistant",
-                            "content": event.content,
-                            "title": f"Output: {event.agent_name}",
-                            "is_expander": True,
-                            "avatar": "🤖"
-                        })
+                        show_expander_message("🤖", f"Output: {event.agent_name}", event.content)
                         
                     elif event.event_type == "error":
                         if event.metadata.get("is_safety_violation"):

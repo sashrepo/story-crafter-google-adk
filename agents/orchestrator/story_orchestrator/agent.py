@@ -40,12 +40,6 @@ from agents.story_quality_loop import agent as story_quality_loop_module
 from agents.story_editor import agent as story_editor_module
 from agents.story_guide import agent as story_guide_module
 
-# Optional model imports for type hints
-from models.intent import UserIntent
-from models.world import WorldModel
-from models.character import CharacterModel
-from models.plot import PlotModel
-from models.story import StoryModel
 
 
 def create_orchestrator(enable_refinement: bool = True, mode: str = "create"):

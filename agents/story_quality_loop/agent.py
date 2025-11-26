@@ -14,7 +14,6 @@ Run with:
 from google.adk.agents import Agent, LoopAgent
 from google.adk.tools import FunctionTool, exit_loop
 from services.llm import create_gemini_model
-from models.story_feedback import StoryFeedback
 
 
 def create_agent():

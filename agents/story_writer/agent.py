@@ -18,7 +18,6 @@ Example workflow:
 
 from google.adk.agents import Agent
 
-from models.story import StoryModel
 from services.llm import create_gemini_model
 
 # Create the Story Writer Agent - outputs plain text for quality loop
