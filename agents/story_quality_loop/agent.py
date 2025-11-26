@@ -11,13 +11,6 @@ Run with:
     uv run adk run agents/story_quality_loop
 """
 
-import sys
-from pathlib import Path
-
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 from google.adk.agents import Agent, LoopAgent
 from google.adk.tools import FunctionTool, exit_loop
 from services.llm import create_gemini_model

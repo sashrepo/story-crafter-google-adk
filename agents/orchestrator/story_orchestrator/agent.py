@@ -25,14 +25,6 @@ USAGE (Python - see example.py for full implementation):
     For programmatic usage, see example.py which uses proper ADK Runner setup.
 """
 
-import os
-from pathlib import Path
-import sys
-
-# Ensure project root is discoverable for imports
-project_root = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(project_root))
-
 from google.adk.agents import SequentialAgent, ParallelAgent, LlmAgent
 
 # --------------------------------------------------------------------

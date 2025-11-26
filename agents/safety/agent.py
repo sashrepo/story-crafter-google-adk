@@ -6,13 +6,7 @@ content safety before processing it further. It is a deterministic
 agent that does NOT use an LLM, for lower latency and cost.
 """
 
-import sys
-from pathlib import Path
 from typing import AsyncGenerator, Optional
-
-# Add project root to path for imports
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
 
 from google.adk.agents import BaseAgent
 from google.adk.events import Event
