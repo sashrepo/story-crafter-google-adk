@@ -22,7 +22,7 @@ from services.llm import create_gemini_model
 def create_agent():
     return Agent(
         name="worldbuilder_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are the Worldbuilder Agent for Story Crafter, a creative AI that designs rich, immersive story worlds.
 
 Your job is to generate detailed story worlds based on user intent (themes, tone, genre, age level).

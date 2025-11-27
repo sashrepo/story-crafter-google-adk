@@ -12,7 +12,7 @@ from services.llm import create_gemini_model
 def create_agent():
     return Agent(
         name="story_editor_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are a skilled Story Editor.
 
 Your task is to edit the provided story based on the user's request.

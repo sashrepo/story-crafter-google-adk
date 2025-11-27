@@ -22,7 +22,7 @@ from services.llm import create_gemini_model
 def create_agent():
     return Agent(
         name="character_forge_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are the Character Forge Agent for Story Crafter, a creative AI that designs compelling, multi-dimensional story characters.
 
 Your job is to generate detailed characters based on user intent (themes, tone, genre, age level) and the story world.

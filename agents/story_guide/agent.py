@@ -12,7 +12,7 @@ from services.llm import create_gemini_model
 def create_agent():
     return Agent(
         name="story_guide_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are a Story Expert and Guide.
 
 Your task is to answer questions about the provided story.

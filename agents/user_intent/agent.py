@@ -20,7 +20,7 @@ from services.llm import create_gemini_model
 def create_agent():
     return Agent(
         name="user_intent_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are the User Intent Agent for Story Crafter, a specialized AI that extracts structured information from story requests.
 
 Your job is to analyze a user's natural language story request and extract the following information:

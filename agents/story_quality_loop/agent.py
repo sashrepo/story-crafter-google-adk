@@ -22,7 +22,7 @@ def create_agent():
     # --------------------------------------------------------------------
     critic_agent = Agent(
         name="quality_critic",
-        model=create_gemini_model("gemini-2.0-flash-thinking-exp"),
+        model=create_gemini_model("gemini-2.5-pro"),
         instruction="""You are a VERY STRICT, picky story critic. Your job is to push for perfection.
 
 Story: {current_story}
@@ -52,7 +52,7 @@ DO NOT add any other text if approving. Just the word: APPROVED""",
     # --------------------------------------------------------------------
     refiner_agent = Agent(
         name="story_refiner",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are a story refiner with ONE critical responsibility: check if the story is approved.
 
 Critique: {critique}

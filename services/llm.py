@@ -21,7 +21,7 @@ def create_gemini_model(model_name: str) -> Gemini:
     """Create a Gemini model instance with shared retry configuration.
     
     Args:
-        model_name: The Gemini model name (e.g., "gemini-2.5-flash")
+        model_name: The Gemini model name (e.g., "gemini-2.5-flash", "gemini-2.5-pro")
         
     Returns:
         Gemini model instance with retry configuration

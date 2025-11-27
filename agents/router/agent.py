@@ -15,7 +15,7 @@ from models.routing import RoutingDecision
 def create_agent():
     return Agent(
         name="router_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are a Router for a Storytelling AI.
 
 Your job is to classify the User's Request (the latest message in the chat history) into one of three categories:

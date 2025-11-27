@@ -24,7 +24,7 @@ from services.llm import create_gemini_model
 def create_agent():
     return Agent(
         name="story_writer_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         output_key="current_story",  # Store full story text for quality loop
         instruction="""You are the Story Writer Agent for Story Crafter, a masterful storyteller who transforms structured story components into engaging narrative prose.
 

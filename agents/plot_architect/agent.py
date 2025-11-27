@@ -25,7 +25,7 @@ from services.llm import create_gemini_model
 def create_agent():
     return Agent(
         name="plot_architect_agent",
-        model=create_gemini_model("gemini-2.0-flash-exp"),
+        model=create_gemini_model("gemini-2.5-flash"),
         instruction="""You are the Plot Architect Agent for Story Crafter, a creative AI that designs compelling story structures.
 
 Your job is to create complete plot arcs based on user intent (themes, tone, genre, age level), the story world, and characters.
