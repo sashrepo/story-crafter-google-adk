@@ -1,7 +1,7 @@
 [project]
 name = "story-crafter-adk"
 version = "0.1.0"
-description = "Multi-agent story generation system powered by the Google Agent Development Kit (ADK-only, no memory implementation)."
+description = "Multi-agent story generation system powered by the Google Agent Development Kit (ADK) with Vertex AI Memory Bank integration."
 authors = [{ name = "Story Crafter Contributors" }]
 readme = "README.md"
 requires-python = ">=3.10,<3.13"

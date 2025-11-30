@@ -324,9 +324,7 @@ def create_agent_engine(dry_run: bool = False):
             resource_name = agent_engine.name
             display_name = getattr(agent_engine, 'display_name', 'Story Crafter')
         else:
-            # Fallback: inspect the object
-            print(f"\nDebug: agent_engine type = {type(agent_engine)}")
-            print(f"Debug: agent_engine attrs = {[a for a in dir(agent_engine) if not a.startswith('_')]}")
+            # Fallback: use string representation
             resource_name = str(agent_engine)
             display_name = "Story Crafter"
         
@@ -340,6 +338,10 @@ def create_agent_engine(dry_run: bool = False):
         print(f"   Agent Engine ID: {agent_engine_id}")
         print(f"   Display Name: {display_name}")
         
+        # Get the actual configured topics to display
+        configured_topics = [t['custom_memory_topic']['label'] for t in get_memory_topics() if 'custom_memory_topic' in t]
+        topics_list = '\n   '.join(f'• {topic}' for topic in configured_topics)
+        
         print(f"""
 📋 NEXT STEPS:
 
@@ -352,13 +354,9 @@ def create_agent_engine(dry_run: bool = False):
    streamlit run app.py
 
 3. Your custom memory topics are now active:
-   • story_preferences
-   • character_preferences  
-   • world_preferences
-   • story_feedback
-   • narrative_style
+   {topics_list}
 
-Memory Bank will now extract these preferences from conversations!
+Memory Bank will now extract these topics from conversations!
 """)
         
         return True
