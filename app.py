@@ -253,7 +253,9 @@ if prompt := st.chat_input("✨ Imagine a story... type your idea here! 🚀"):
                                 "content": f"❌ Safety Rejection: {event.content}",
                                 "avatar": "🛡️"
                             })
+                            status_placeholder.update(label="Content Rejected", state="error", expanded=False)
                         else:
+                            status_placeholder.update(label="Error", state="error", expanded=False)
                             raise Exception(event.content)
                         return
                         

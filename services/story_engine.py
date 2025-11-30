@@ -24,6 +24,9 @@ from agents.orchestrator.story_orchestrator import agent as orchestrator_module
 # Import models for structured parsing
 from models.routing import RoutingDecision
 
+# Import safety check for pre-processing
+from services.perspective import check_toxicity
+
 logger = logging.getLogger(__name__)
 
 
@@ -401,6 +404,24 @@ class StoryEngine:
             StoryEvent objects representing the processing progress
         """
         try:
+            # ============================================================
+            # PRE-CHECK: Safety validation BEFORE any session/LLM operations
+            # This prevents unnecessary API calls and session writes for toxic content
+            # ============================================================
+            yield StoryEvent("status", "safety", "Running safety pre-check...")
+            
+            safety_result = check_toxicity(prompt)
+            if not safety_result["safe"]:
+                yield StoryEvent(
+                    "error",
+                    "safety_precheck",
+                    f"Content Rejected: {safety_result['reason']}",
+                    {"is_safety_violation": True, "score": safety_result["score"]}
+                )
+                return
+            
+            yield StoryEvent("status", "safety", "Safety pre-check passed")
+            
             # Ensure session exists and get the valid session object
             session = await self.get_or_create_session(user_id, session_id)
             actual_session_id = self._get_session_id(session) or session_id
@@ -501,13 +522,6 @@ class StoryEngine:
                             
                         elif agent_name == "story_guide_agent":
                             yield StoryEvent("guide_answer", agent_name, content_text)
-                            
-                        elif agent_name == "safety_agent":
-                            if "Content Rejected" in content_text:
-                                yield StoryEvent("error", agent_name, content_text, {"is_safety_violation": True})
-                                return
-                            else:
-                                yield StoryEvent("status", agent_name, "Safety check passed")
                         
                         else:
                             yield StoryEvent("agent_output", agent_name, content_text)

@@ -4,6 +4,10 @@ ADK-based Story Orchestrator for Story Crafter.
 This module uses Google ADK's Sequential, Parallel, and Loop workflow agents to
 coordinate story generation with optimal performance.
 
+NOTE: Safety checks (Perspective API) are performed in story_engine.py BEFORE
+the orchestrator runs. This ensures toxic content is rejected before any
+session writes or LLM calls happen.
+
 Workflow:
 1. User Intent Agent (sequential)
 2. Parallel execution:
@@ -31,7 +35,6 @@ from google.adk.agents import SequentialAgent, ParallelAgent, LlmAgent
 # Import sub-agent modules (factories)
 # --------------------------------------------------------------------
 from agents.user_intent import agent as user_intent_module
-from agents.safety import agent as safety_module
 from agents.worldbuilder import agent as worldbuilder_module
 from agents.character_forge import agent as character_forge_module
 from agents.plot_architect import agent as plot_architect_module
@@ -47,6 +50,9 @@ def create_orchestrator(enable_refinement: bool = True, mode: str = "create"):
     Get the appropriate orchestrator based on mode and refinement preference.
     Creates FRESH agent instances for every call to avoid state pollution.
     
+    NOTE: Safety checks are performed in story_engine.py BEFORE this orchestrator
+    runs, so we don't need a safety_agent in the pipeline.
+    
     Args:
         enable_refinement: If True, returns the default orchestrator with quality loop (only for 'create' mode).
         mode: One of "create", "edit", "question".
@@ -58,9 +64,6 @@ def create_orchestrator(enable_refinement: bool = True, mode: str = "create"):
         The appropriate Agent orchestrator
     """
     
-    # Always create a fresh safety agent
-    safety_agent = safety_module.create_agent()
-    
     # ----------------------------------------------------------------
     # EDIT MODE
     # ----------------------------------------------------------------
@@ -69,9 +72,8 @@ def create_orchestrator(enable_refinement: bool = True, mode: str = "create"):
         
         return SequentialAgent(
             name="story_editor_orchestrator",
-            description="Editor pipeline: safety → editor",
+            description="Editor pipeline: editor agent",
             sub_agents=[
-                safety_agent,
                 editor_agent,
             ],
         )
@@ -84,9 +86,8 @@ def create_orchestrator(enable_refinement: bool = True, mode: str = "create"):
         
         return SequentialAgent(
             name="story_guide_orchestrator",
-            description="Guide pipeline: safety → story guide",
+            description="Guide pipeline: story guide agent",
             sub_agents=[
-                safety_agent,
                 guide_agent,
             ],
         )
@@ -113,9 +114,8 @@ def create_orchestrator(enable_refinement: bool = True, mode: str = "create"):
         ],
     )
     
-    # Build the chain
+    # Build the chain (safety check happens in story_engine.py before this runs)
     sub_agents = [
-        safety_agent,
         user_intent_agent,
         parallel_content_generation,
         story_writer_agent,
@@ -128,7 +128,7 @@ def create_orchestrator(enable_refinement: bool = True, mode: str = "create"):
         
         return SequentialAgent(
             name="story_orchestrator",
-            description="Top-level orchestrator: safety → intent → content → writer → quality loop",
+            description="Top-level orchestrator: intent → content → writer → quality loop",
             sub_agents=sub_agents,
         )
     else:
