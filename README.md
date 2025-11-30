@@ -170,8 +170,8 @@ Story Crafter ADK is an intelligent story generation system that uses multiple s
 - **Multi-Agent Collaboration**: Specialized agents handle different aspects of storytelling (world-building, character development, plot structure, prose writing)
 - **Parallel Processing**: World, character, and plot generation happen simultaneously for optimal performance
 - **Quality Refinement**: Optional iterative review loop with critic and refiner agents to polish stories
-- **Safety-First**: Built-in content safety validation using Google Perspective API
-- **In-Memory Sessions**: Fast, lightweight session management ideal for development and stateless deployments
+- **Safety-First**: Built-in content safety validation using Google Perspective API (pre-check before any LLM calls)
+- **Flexible Storage**: Supports both in-memory (development) and Vertex AI Memory Bank (production) for session and memory persistence
 - **Interactive UI**: Modern Streamlit-based web interface with Google Material Design theme
 
 ## 🏗️ Architecture
@@ -545,11 +545,18 @@ Main backend service that handles:
 
 ### Memory Services (`services/memory.py`)
 
-Provides in-memory storage using ADK's built-in services:
+Provides session and memory services with automatic backend selection:
+
+**In-Memory (Default - Development)**:
 - **InMemoryMemoryService**: For agent memory (cached with Streamlit)
 - **InMemorySessionService**: For conversation history (cached with Streamlit)
+- Sessions are NOT persisted between application restarts
 
-Sessions are NOT persisted between application restarts.
+**Vertex AI Memory Bank (Production)**:
+- **VertexAiMemoryBankService**: Persistent memory with custom topic extraction
+- **VertexAiSessionService**: Cloud-based session storage
+- Requires: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `AGENT_ENGINE_ID`
+- Custom memory topics defined in `services/memory_config.py`
 
 ## 🐳 Docker Deployment
 
@@ -817,4 +824,4 @@ Built with ❤️ using:
 
 ---
 
-**Note**: This is an in-memory implementation designed for development and stateless deployments. For production use with persistent sessions, consider implementing custom session storage with a database backend.
+**Note**: By default, this uses in-memory storage for development. For production with persistent sessions and memories, configure Vertex AI Memory Bank by setting the environment variables (`GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `AGENT_ENGINE_ID`) and using the setup scripts in `scripts/`.

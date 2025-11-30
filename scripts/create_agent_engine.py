@@ -52,8 +52,13 @@ def build_memory_bank_config():
     Build the Memory Bank config using the Vertex AI SDK types.
     
     Reference: https://docs.cloud.google.com/agent-builder/agent-engine/memory-bank/set-up#class-based_1
+    
+    Note: Uses internal vertexai._genai.types module. This may break with SDK updates.
+    Monitor google-cloud-aiplatform releases for public API alternatives.
     """
-    # Import from the internal types module (vertexai._genai.types)
+    # WARNING: These imports use private/internal SDK types (underscore prefix).
+    # This is the current recommended approach per Vertex AI docs, but may change.
+    # If imports fail after SDK update, check for public equivalents in vertexai.types
     from vertexai._genai.types import MemoryBankCustomizationConfig as CustomizationConfig
     from vertexai._genai.types import MemoryBankCustomizationConfigMemoryTopic as MemoryTopic
     from vertexai._genai.types import MemoryBankCustomizationConfigMemoryTopicCustomMemoryTopic as CustomMemoryTopic
@@ -279,6 +284,7 @@ def create_agent_engine(dry_run: bool = False):
     
     try:
         import vertexai
+        # Note: Using internal types - see build_memory_bank_config() for details
         from vertexai._genai.types import (
             AgentEngineConfig,
             ReasoningEngineContextSpec,

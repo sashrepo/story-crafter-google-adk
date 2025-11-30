@@ -123,7 +123,6 @@ def apply_memory_config(dry_run: bool = False):
     
     # Save the config file
     config_path = project_root / "memory_bank_config.json"
-    memory_topics = build_memory_topics_dict()
     
     with open(config_path, "w") as f:
         json.dump(get_customization_config(), f, indent=2)
@@ -236,7 +235,7 @@ To apply these custom topics, use one of the following options:
     return True
 
 
-def test_memory_generation(dry_run: bool = False):
+def test_memory_generation():
     """
     Test memory generation with a sample conversation.
     
@@ -264,14 +263,13 @@ def test_memory_generation(dry_run: bool = False):
         role_emoji = "👤" if event["role"] == "user" else "🤖"
         print(f"   {role_emoji} {event['role'].title()}: {event['content']}")
     
-    print("\n📋 Expected memories to extract:")
-    print("   • story_preferences: User loves dark fantasy stories")
-    print("   • character_preferences: User prefers anti-hero protagonists")
-    print("   • world_preferences: User wants steampunk Victorian setting with magic")
+    # Show expected memory extraction based on configured topics
+    topics = get_memory_topics()
+    custom_topics = [t['custom_memory_topic']['label'] for t in topics if 'custom_memory_topic' in t]
     
-    if dry_run:
-        print("\n🔍 DRY RUN - Skipping actual API call")
-        return True
+    print("\n📋 Configured custom memory topics:")
+    for topic in custom_topics:
+        print(f"   • {topic}")
     
     print("\n⏳ Sending test conversation to Memory Bank...")
     

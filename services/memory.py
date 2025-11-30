@@ -25,7 +25,7 @@ from google.adk.memory import InMemoryMemoryService, VertexAiMemoryBankService
 from google.adk.sessions import InMemorySessionService, VertexAiSessionService
 
 # Import custom memory configuration
-from services.memory_config import get_customization_config, get_memory_topics
+from services.memory_config import get_memory_topics
 
 logger = logging.getLogger(__name__)
 
@@ -37,23 +37,6 @@ def _get_vertex_config():
         "location": os.getenv("GOOGLE_CLOUD_LOCATION"),
         "agent_engine_id": os.getenv("AGENT_ENGINE_ID") or os.getenv("MEMORY_BANK_ID")
     }
-
-
-def get_memory_bank_customization():
-    """
-    Get the Memory Bank customization configuration for Story Crafter.
-    
-    This includes custom memory topics for:
-    - story_preferences: Genre, themes, complexity
-    - character_preferences: Character types and arcs
-    - world_preferences: Settings and world-building
-    - story_feedback: User reactions to stories
-    - narrative_style: Writing style preferences
-    
-    Returns:
-        Dictionary with memory_topics configuration.
-    """
-    return get_customization_config()
 
 
 def _is_vertex_configured(config: dict) -> bool:
@@ -142,17 +125,12 @@ def print_memory_topics_for_setup():
     print("\nCopy these topics when setting up your Memory Bank instance:\n")
     print(json.dumps({"memory_topics": topics}, indent=2))
     print("\n" + "=" * 60)
-    print("To apply these topics, use the Vertex AI SDK or API:")
+    print("To apply these topics, use the Vertex AI SDK or scripts:")
     print("=" * 60)
     print("""
-# Python SDK example:
-from google.cloud import aiplatform
-from vertexai.types import MemoryBankCustomizationConfig
+# Use the provided setup scripts:
+python scripts/create_agent_engine.py --create
+python scripts/apply_memory_config.py
 
-# When creating/updating your Agent Engine with Memory Bank:
-customization_config = {
-    "memory_topics": [
-        # ... paste topics from above
-    ]
-}
+# Or see services/memory_config.py for the topic definitions.
 """)

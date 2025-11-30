@@ -6,12 +6,14 @@ Agent Development Kit (ADK) with Vertex AI Memory Bank integration.
 """
 
 import asyncio
-import streamlit as st
+import logging
 import os
+import sys
 import uuid
 from pathlib import Path
-import sys
-import logging
+
+import streamlit as st
+import vertexai
 from dotenv import load_dotenv
 
 # Configure logging
@@ -107,8 +109,7 @@ with st.sidebar:
                 project = os.getenv("GOOGLE_CLOUD_PROJECT")
                 location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
                 
-                # Use vertexai.Client for more control over memory retrieval
-                import vertexai
+                # Use vertexai.Client for memory retrieval
                 client = vertexai.Client(project=project, location=location)
                 
                 # Build resource name

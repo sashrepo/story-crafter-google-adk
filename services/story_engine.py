@@ -10,7 +10,10 @@ Supports both InMemory and Vertex AI session/memory services.
 
 import json
 import logging
+import os
 from typing import AsyncGenerator, Dict, Any, Optional
+
+import vertexai
 from google.adk import Runner
 from google.adk.sessions import InMemorySessionService
 from google.adk.plugins.logging_plugin import LoggingPlugin
@@ -26,6 +29,9 @@ from models.routing import RoutingDecision
 
 # Import safety check for pre-processing
 from services.perspective import check_toxicity
+
+# Constants
+STORY_PREVIEW_MAX_LENGTH = 2000
 
 logger = logging.getLogger(__name__)
 
@@ -334,9 +340,6 @@ class StoryEngine:
             user_prompt: The original user prompt
         """
         try:
-            import vertexai
-            import os
-            
             project = os.getenv("GOOGLE_CLOUD_PROJECT")
             location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
             
@@ -348,9 +351,8 @@ class StoryEngine:
             
             agent_engine_name = f"projects/{project}/locations/{location}/reasoningEngines/{self.app_name}"
             
-            # Create a brief summary of key story elements
             # Truncate story to avoid token limits
-            story_preview = story_content[:2000] if len(story_content) > 2000 else story_content
+            story_preview = story_content[:STORY_PREVIEW_MAX_LENGTH] if len(story_content) > STORY_PREVIEW_MAX_LENGTH else story_content
             
             # Build conversation events that include the story
             # This helps Memory Bank extract story content
