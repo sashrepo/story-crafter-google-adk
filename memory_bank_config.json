@@ -1,0 +1,10 @@
+{
+  "memory_topics": [
+    {
+      "custom_memory_topic": {
+        "label": "story_content",
+        "description": "Extract and remember ALL important elements from generated stories:\n\nFROM THE STORY TEXT, extract:\n- Character names and descriptions (e.g., \"Zara is a young wizard with silver hair\")\n- The setting and world details (e.g., \"The story takes place in the floating city of Aethon\")\n- Major plot events that happened (e.g., \"Zara discovered a hidden library beneath the castle\")\n- Relationships between characters (e.g., \"Kira is Zara's mentor and teaches her fire magic\")\n- Any magical systems, abilities, or rules (e.g., \"Magic requires speaking ancient words\")\n- Important objects or artifacts (e.g., \"The Starlight Amulet can reveal hidden truths\")\n- Unresolved mysteries or cliffhangers (e.g., \"The identity of the shadow figure is unknown\")\n\nFROM THE USER REQUEST, extract:\n- What kind of story they asked for (e.g., \"User requested a fantasy adventure story\")\n- Specific elements they wanted (e.g., \"User wanted dragons and a young hero\")\n\nALWAYS extract character names, settings, and key plot points from the model's story response.\nThis information is critical for story continuity in future sessions."
+      }
+    }
+  ]
+}

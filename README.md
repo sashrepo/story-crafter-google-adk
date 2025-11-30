@@ -2,142 +2,7 @@
 
 A multi-agent storytelling system powered by **Google Agent Development Kit (ADK)**. This application orchestrates specialized AI agents to collaboratively generate age-appropriate, engaging stories through an interactive web interface or CLI.
 
-## 📑 Table of Contents
-
-- [🎯 Overview](#-overview)
-  - [Key Capabilities](#key-capabilities)
-- [🏗️ Architecture](#️-architecture)
-  - [Agent Ecosystem](#agent-ecosystem)
-  - [Processing Workflows](#processing-workflows)
-  - [Orchestration](#orchestration)
-- [📁 Project Structure](#-project-structure)
-- [🚀 Quick Start](#-quick-start)
-  - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
-  - [Running the Application](#running-the-application)
-- [🎨 Usage Examples](#-usage-examples)
-  - [Creating a New Story](#creating-a-new-story)
-  - [Editing an Existing Story](#editing-an-existing-story)
-  - [Asking Questions](#asking-questions)
-- [🔧 Configuration](#-configuration)
-  - [Model Selection](#model-selection)
-  - [Retry Configuration](#retry-configuration)
-  - [Quality Loop Settings](#quality-loop-settings)
-  - [Perspective API](#perspective-api)
-- [📊 Data Models](#-data-models)
-- [🔌 Backend Services](#-backend-services)
-  - [StoryEngine](#storyengine-servicesstory_enginepy)
-  - [Memory Services](#memory-services-servicesmemorypy)
-- [🐳 Docker Deployment](#-docker-deployment)
-  - [Build the Container](#build-the-container)
-  - [Run Locally](#run-locally)
-  - [Deploy to Google Cloud Run](#deploy-to-google-cloud-run)
-- [🧪 Development](#-development)
-  - [Running Tests](#running-tests)
-  - [Code Quality](#code-quality)
-  - [Development Dependencies](#development-dependencies)
-- [🎓 How It Works](#-how-it-works)
-  - [Story Generation Flow](#story-generation-flow)
-  - [Quality Loop Details](#quality-loop-details)
-  - [Parallel Processing](#parallel-processing)
-- [💡 Tips & Best Practices](#-tips--best-practices)
-- [🐛 Troubleshooting](#-troubleshooting)
-- [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
-- [🔗 Related Resources](#-related-resources)
-- [🙏 Acknowledgments](#-acknowledgments)
-
-## 🎯 Overview
-
-Story Crafter ADK is an intelligent story generation system that uses multiple specialized AI agents working together to create rich narratives. The system features smart routing, parallel processing, and iterative quality refinement to produce polished, age-appropriate stories.
-
-### Key Capabilities
-
-- **Smart Routing**: Automatically classifies user input to determine whether to create a new story, edit an existing one, or answer questions
-- **Multi-Agent Collaboration**: Specialized agents handle different aspects of storytelling (world-building, character development, plot structure, prose writing)
-- **Parallel Processing**: World, character, and plot generation happen simultaneously for optimal performance
-- **Quality Refinement**: Optional iterative review loop with critic and refiner agents to polish stories
-- **Safety-First**: Built-in content safety validation using Google Perspective API
-- **In-Memory Sessions**: Fast, lightweight session management ideal for development and stateless deployments
-- **Interactive UI**: Modern Streamlit-based web interface with Google Material Design theme
-
-## 🏗️ Architecture
-
-### Agent Ecosystem
-
-The system consists of 9 specialized agents:
-
-1. **Router Agent** (`agents/router/`)
-   - Classifies user requests into: NEW_STORY, EDIT_STORY, or QUESTION
-   - Uses structured output (RoutingDecision model)
-   - Determines optimal processing pipeline
-
-2. **Safety Agent** (`agents/safety/`)
-   - Deterministic agent (no LLM) for fast validation
-   - Uses Google Perspective API for toxicity checking
-   - Blocks unsafe content before processing
-   - Raises SafetyViolationError on policy violations
-
-3. **User Intent Agent** (`agents/user_intent/`)
-   - Extracts structured requirements from natural language
-   - Outputs: age, themes, tone, genre, length_minutes, safety_constraints
-   - Uses UserIntent Pydantic model
-
-4. **Worldbuilder Agent** (`agents/worldbuilder/`)
-   - Creates immersive story worlds
-   - Generates: name, description, rules, locations, aesthetic
-   - Uses WorldModel Pydantic model
-
-5. **Character Forge Agent** (`agents/character_forge/`)
-   - Designs multi-dimensional characters
-   - Generates: name, species, role, physical/personality traits, strengths, weaknesses, motivations, goals, relationships
-   - Uses CharacterModel Pydantic model
-
-6. **Plot Architect Agent** (`agents/plot_architect/`)
-   - Structures compelling narratives with classic story beats
-   - Generates: setup, conflict, rising_action, climax, resolution, themes, episode_hook
-   - Uses PlotModel Pydantic model
-
-7. **Story Writer Agent** (`agents/story_writer/`)
-   - Transforms structured components into narrative prose
-   - Outputs complete stories as formatted text
-   - Adjusts language complexity based on target age
-   - Uses output_key="current_story" for quality loop integration
-
-8. **Story Quality Loop** (`agents/story_quality_loop/`)
-   - Iterative refinement with max 3 iterations
-   - **Critic Agent**: Reviews story, outputs "APPROVED" or specific feedback
-   - **Refiner Agent**: Revises story based on feedback or exits loop
-   - Uses LoopAgent with exit_loop tool
-
-9. **Story Editor Agent** (`agents/story_editor/`)
-   - Modifies existing stories based on user feedback
-   - Fast pipeline for quick edits
-
-10. **Story Guide Agent** (`agents/story_guide/`)
-    - Answers questions about story content
-    - Does not modify stories, acts as Q&A expert
-
-### Processing Workflows
-
-The system supports three distinct processing modes, each optimized for different user intents:
-
-#### Create Mode (Full Generation)
-```
-User Input → Router → Safety → User Intent → [Parallel: World + Characters + Plot] → Story Writer → Quality Loop → Final Story
-```
-
-#### Edit Mode (Fast)
-```
-User Input → Router → Safety → Story Editor → Edited Story
-```
-
-#### Question Mode (Q&A)
-```
-User Input → Router → Safety → Story Guide → Answer
-```
-
-#### Visual Flow Diagram
+## 🏛️ Agent Architecture
 
 ```mermaid
 graph TD
@@ -249,6 +114,142 @@ graph TD
     linkStyle default stroke:#546E7A,stroke-width:2px;
 ```
 
+## 📑 Table of Contents
+
+- [🎯 Overview](#-overview)
+  - [Key Capabilities](#key-capabilities)
+- [🏗️ Architecture](#️-architecture)
+  - [Agent Ecosystem](#agent-ecosystem)
+  - [Processing Workflows](#processing-workflows)
+  - [Orchestration](#orchestration)
+- [📁 Project Structure](#-project-structure)
+- [🚀 Quick Start](#-quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+  - [Running the Application](#running-the-application)
+- [🎨 Usage Examples](#-usage-examples)
+  - [Creating a New Story](#creating-a-new-story)
+  - [Editing an Existing Story](#editing-an-existing-story)
+  - [Asking Questions](#asking-questions)
+- [🔧 Configuration](#-configuration)
+  - [Model Selection](#model-selection)
+  - [Retry Configuration](#retry-configuration)
+  - [Quality Loop Settings](#quality-loop-settings)
+  - [Perspective API](#perspective-api)
+- [📊 Data Models](#-data-models)
+- [🔌 Backend Services](#-backend-services)
+  - [StoryEngine](#storyengine-servicesstory_enginepy)
+  - [Memory Services](#memory-services-servicesmemorypy)
+- [🐳 Docker Deployment](#-docker-deployment)
+  - [Build the Container](#build-the-container)
+  - [Run Locally](#run-locally)
+  - [Deploy to Google Cloud Run](#deploy-to-google-cloud-run)
+- [🧪 Development](#-development)
+  - [Running Tests](#running-tests)
+  - [Evaluations Framework](#evaluations-framework)
+  - [Code Quality](#code-quality)
+  - [Development Dependencies](#development-dependencies)
+- [🎓 How It Works](#-how-it-works)
+  - [Story Generation Flow](#story-generation-flow)
+  - [Quality Loop Details](#quality-loop-details)
+  - [Parallel Processing](#parallel-processing)
+- [💡 Tips & Best Practices](#-tips--best-practices)
+- [🐛 Troubleshooting](#-troubleshooting)
+- [🤝 Contributing](#-contributing)
+- [📄 License](#-license)
+- [🔗 Related Resources](#-related-resources)
+- [🙏 Acknowledgments](#-acknowledgments)
+
+## 🎯 Overview
+
+Story Crafter ADK is an intelligent story generation system that uses multiple specialized AI agents working together to create rich narratives. The system features smart routing, parallel processing, and iterative quality refinement to produce polished, age-appropriate stories.
+
+### Key Capabilities
+
+- **Smart Routing**: Automatically classifies user input to determine whether to create a new story, edit an existing one, or answer questions
+- **Multi-Agent Collaboration**: Specialized agents handle different aspects of storytelling (world-building, character development, plot structure, prose writing)
+- **Parallel Processing**: World, character, and plot generation happen simultaneously for optimal performance
+- **Quality Refinement**: Optional iterative review loop with critic and refiner agents to polish stories
+- **Safety-First**: Built-in content safety validation using Google Perspective API
+- **In-Memory Sessions**: Fast, lightweight session management ideal for development and stateless deployments
+- **Interactive UI**: Modern Streamlit-based web interface with Google Material Design theme
+
+## 🏗️ Architecture
+
+### Agent Ecosystem
+
+The system consists of 10 specialized agents:
+
+1. **Router Agent** (`agents/router/`)
+   - Classifies user requests into: NEW_STORY, EDIT_STORY, or QUESTION
+   - Uses structured output (RoutingDecision model)
+   - Determines optimal processing pipeline
+
+2. **Safety Agent** (`agents/safety/`)
+   - Deterministic agent (no LLM) for fast validation
+   - Uses Google Perspective API for toxicity checking
+   - Blocks unsafe content before processing
+   - Raises SafetyViolationError on policy violations
+
+3. **User Intent Agent** (`agents/user_intent/`)
+   - Extracts structured requirements from natural language
+   - Outputs: age, themes, tone, genre, length_minutes, safety_constraints
+   - Uses UserIntent Pydantic model
+
+4. **Worldbuilder Agent** (`agents/worldbuilder/`)
+   - Creates immersive story worlds
+   - Generates: name, description, rules, locations, aesthetic
+   - Uses WorldModel Pydantic model
+
+5. **Character Forge Agent** (`agents/character_forge/`)
+   - Designs multi-dimensional characters
+   - Generates: name, species, role, physical/personality traits, strengths, weaknesses, motivations, goals, relationships
+   - Uses CharacterModel Pydantic model
+
+6. **Plot Architect Agent** (`agents/plot_architect/`)
+   - Structures compelling narratives with classic story beats
+   - Generates: setup, conflict, rising_action, climax, resolution, themes, episode_hook
+   - Uses PlotModel Pydantic model
+
+7. **Story Writer Agent** (`agents/story_writer/`)
+   - Transforms structured components into narrative prose
+   - Outputs complete stories as formatted text
+   - Adjusts language complexity based on target age
+   - Uses output_key="current_story" for quality loop integration
+
+8. **Story Quality Loop** (`agents/story_quality_loop/`)
+   - Iterative refinement with max 3 iterations
+   - **Critic Agent**: Reviews story, outputs "APPROVED" or specific feedback
+   - **Refiner Agent**: Revises story based on feedback or exits loop
+   - Uses LoopAgent with exit_loop tool
+
+9. **Story Editor Agent** (`agents/story_editor/`)
+   - Modifies existing stories based on user feedback
+   - Fast pipeline for quick edits
+
+10. **Story Guide Agent** (`agents/story_guide/`)
+    - Answers questions about story content
+    - Does not modify stories, acts as Q&A expert
+
+### Processing Workflows
+
+The system supports three distinct processing modes, each optimized for different user intents:
+
+#### Create Mode (Full Generation)
+```
+User Input → Router → Safety → User Intent → [Parallel: World + Characters + Plot] → Story Writer → Quality Loop → Final Story
+```
+
+#### Edit Mode (Fast)
+```
+User Input → Router → Safety → Story Editor → Edited Story
+```
+
+#### Question Mode (Q&A)
+```
+User Input → Router → Safety → Story Guide → Answer
+```
+
 ### Orchestration
 
 The Story Orchestrator (`agents/orchestrator/story_orchestrator/`) uses ADK's workflow agents:
@@ -281,14 +282,16 @@ story-crafter-adk/
 │   ├── world.py                 # WorldModel
 │   ├── character.py             # CharacterModel
 │   ├── plot.py                  # PlotModel
-│   ├── story.py                 # StoryModel
-│   ├── routing.py               # RoutingDecision
-│   └── story_feedback.py        # StoryFeedback
+│   └── routing.py               # RoutingDecision
 ├── services/                    # Backend services
 │   ├── llm.py                   # Gemini model factory with retry config
 │   ├── memory.py                # In-memory session service
 │   ├── perspective.py           # Perspective API integration
 │   └── story_engine.py          # Story processing engine
+├── evals/                       # Evaluation framework
+│   ├── datasets.py              # Test cases and datasets
+│   ├── metrics.py               # Evaluation metrics
+│   └── runner.py                # Eval orchestrator
 ├── ui/                          # UI components
 │   └── theme.py                 # Google Material Design theme
 ├── tests/                       # Test suite
@@ -512,26 +515,10 @@ themes: list[str]
 episode_hook: Optional[str]
 ```
 
-### StoryModel
-```python
-title: str
-text: str
-word_count: int
-estimated_reading_time_minutes: int
-tone: str
-reading_level: str
-```
-
 ### RoutingDecision
 ```python
 decision: Literal["NEW_STORY", "EDIT_STORY", "QUESTION"]
 confidence: Optional[float]
-```
-
-### StoryFeedback
-```python
-status: str  # "APPROVED" or "NEEDS_REVISION"
-feedback: str
 ```
 
 ## 🔌 Backend Services
@@ -606,6 +593,51 @@ Test files:
 - `tests/test_perspective.py` - Perspective API integration
 - `tests/test_router_parsing.py` - Router agent output parsing
 - `tests/test_safety_agent.py` - Safety agent behavior
+- `tests/test_evals.py` - Evaluation framework tests
+
+### Evaluations Framework
+
+Story Crafter includes a comprehensive evaluation framework in `evals/` for systematic testing of agent behavior:
+
+#### Running Evaluations
+
+```bash
+# Run via CLI
+uv run python -m evals.runner
+
+# Run via pytest
+uv run pytest tests/test_evals.py -v
+```
+
+#### Programmatic Usage
+
+```python
+from evals import EvalRunner, EvalDataset, RouteAccuracy
+
+runner = EvalRunner(verbose=True)
+summary = await runner.run_router_evals()
+summary.print_summary()
+runner.save_results(summary)
+```
+
+#### Available Metrics
+
+| Metric | Description |
+|--------|-------------|
+| `RouteAccuracy` | Validates router classification (NEW_STORY/EDIT_STORY/QUESTION) |
+| `StructuredOutputValidity` | Validates Pydantic schema conformance |
+| `StoryQualityScore` | Heuristic or LLM-based story quality evaluation |
+| `SafetyCompliance` | Validates safety agent decisions (PASS/BLOCK) |
+| `AgeAppropriatenessScore` | Readability analysis for target age |
+
+#### Eval Datasets
+
+- **ROUTER_CASES**: Tests for request classification
+- **INTENT_CASES**: Tests for user intent extraction
+- **SAFETY_CASES**: Tests for content safety validation
+- **E2E_CASES**: End-to-end story quality tests
+
+Results are saved to `eval_results/` as JSON files.
 
 ### Code Quality
 
@@ -760,6 +792,7 @@ This is a focused ADK implementation emphasizing agent orchestration patterns. C
 4. **Test coverage**:
    - Add tests for new agents/services
    - Use pytest-asyncio for async code
+   - Add eval cases for new agent behaviors
 
 ## 📄 License
 

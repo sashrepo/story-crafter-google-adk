@@ -104,20 +104,39 @@ with st.sidebar:
         with st.spinner("Searching memories..."):
             try:
                 agent_engine_id = os.getenv("AGENT_ENGINE_ID") or os.getenv("MEMORY_BANK_ID")
+                project = os.getenv("GOOGLE_CLOUD_PROJECT")
+                location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
                 
-                async def fetch_memories():
-                    return await memory_service.search_memory(
-                        query="*",
-                        app_name=agent_engine_id or "agents",
-                        user_id=st.session_state.user_id
-                    )
+                # Use vertexai.Client for more control over memory retrieval
+                import vertexai
+                client = vertexai.Client(project=project, location=location)
                 
-                response = asyncio.run(fetch_memories())
+                # Build resource name
+                agent_engine_name = f"projects/{project}/locations/{location}/reasoningEngines/{agent_engine_id}"
                 
-                if hasattr(response, 'memories') and response.memories:
-                    st.success(f"Found {len(response.memories)} memories:")
-                    for m in response.memories:
-                        st.info(m)
+                # List memories with higher page_size using the new API
+                # Use agent_engines.memories.list (not the deprecated list_memories)
+                response = client.agent_engines.memories.list(
+                    name=agent_engine_name,
+                    config={
+                        "page_size": 50,  # Get up to 50 memories
+                    }
+                )
+                
+                # Filter by user_id client-side (API filter syntax can be tricky)
+                all_memories = list(response)
+                user_id = st.session_state.user_id
+                memories = [
+                    m for m in all_memories 
+                    if hasattr(m, 'scope') and m.scope and m.scope.get('user_id') == user_id
+                ]
+                
+                if memories:
+                    st.success(f"Found {len(memories)} memories:")
+                    for m in memories:
+                        # Display memory fact
+                        fact = getattr(m, 'fact', None) or str(m)
+                        st.info(fact)
                 else:
                     st.warning("No memories found yet. (They may take 5-10 mins to appear)")
                     

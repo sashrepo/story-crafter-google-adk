@@ -318,6 +318,67 @@ class StoryEngine:
         except Exception as e:
             logger.warning(f"Failed to save session to memory: {e}")
     
+    async def _save_story_content_to_memory(self, user_id: str, story_content: str, user_prompt: str):
+        """
+        Save story content directly as memories for continuity.
+        
+        This uses the generate_memories API with direct_memories_source to
+        explicitly store story facts that might not be extracted automatically.
+        
+        Args:
+            user_id: User identifier
+            story_content: The generated story text
+            user_prompt: The original user prompt
+        """
+        try:
+            import vertexai
+            import os
+            
+            project = os.getenv("GOOGLE_CLOUD_PROJECT")
+            location = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+            
+            if not project or not self.app_name:
+                logger.warning("Cannot save story content: missing project or agent_engine_id")
+                return
+            
+            client = vertexai.Client(project=project, location=location)
+            
+            agent_engine_name = f"projects/{project}/locations/{location}/reasoningEngines/{self.app_name}"
+            
+            # Create a brief summary of key story elements
+            # Truncate story to avoid token limits
+            story_preview = story_content[:2000] if len(story_content) > 2000 else story_content
+            
+            # Build conversation events that include the story
+            # This helps Memory Bank extract story content
+            events = [
+                {
+                    "content": {
+                        "role": "user",
+                        "parts": [{"text": user_prompt}]
+                    }
+                },
+                {
+                    "content": {
+                        "role": "model",
+                        "parts": [{"text": f"Here is the story I created:\n\n{story_preview}"}]
+                    }
+                }
+            ]
+            
+            # Use generate_memories with direct contents to trigger extraction
+            response = client.agent_engines.memories.generate(
+                name=agent_engine_name,
+                direct_contents_source={"events": events},
+                scope={"user_id": user_id},
+                config={"wait_for_completion": False}  # Don't block
+            )
+            
+            logger.info(f"Story content memory generation initiated for user {user_id}")
+            
+        except Exception as e:
+            logger.warning(f"Failed to save story content to memory: {e}")
+    
     async def process_story_request(
         self,
         prompt: str,
@@ -393,6 +454,7 @@ class StoryEngine:
             
             # Stream agent responses
             iteration_count = 0
+            final_story_content = ""  # Track the final story for memory saving
             
             async for event in runner.run_async(
                 user_id=user_id,
@@ -421,6 +483,7 @@ class StoryEngine:
                             )
                             
                         elif agent_name == "story_refiner":
+                            final_story_content = content_text  # Track refined story
                             yield StoryEvent(
                                 "refined_story",
                                 agent_name,
@@ -429,9 +492,11 @@ class StoryEngine:
                             )
                             
                         elif agent_name == "story_writer_agent":
+                            final_story_content = content_text  # Track initial draft
                             yield StoryEvent("draft_story", agent_name, content_text)
                             
                         elif agent_name == "story_editor_agent":
+                            final_story_content = content_text  # Track edited story
                             yield StoryEvent("edited_story", agent_name, content_text)
                             
                         elif agent_name == "story_guide_agent":
@@ -450,6 +515,12 @@ class StoryEngine:
             # Save session to memory for future context
             yield StoryEvent("status", "memory", "Saving session to memory...")
             await self._save_session_to_memory(user_id, actual_session_id)
+            
+            # Explicitly save story content to memory for extraction
+            if final_story_content:
+                yield StoryEvent("status", "memory", "Saving story content to memory...")
+                await self._save_story_content_to_memory(user_id, final_story_content, prompt)
+            
             yield StoryEvent("status", "memory", "Memory saved")
 
             # Signal completion
