@@ -156,7 +156,7 @@ with st.sidebar:
 
 # --- Main Chat Interface ---
 theme.render_header()
-theme.render_custom_title("Story Crafter Chat", "Collaborate with AI agents to build your story.")
+theme.render_custom_title("Personalized Story Crafter Chat", "Collaborate with AI agents to build your personalized story.")
 
 # Display Chat History
 for message in st.session_state.messages:

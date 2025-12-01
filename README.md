@@ -1,6 +1,14 @@
-# Story Crafter ADK
+# Personalized Story Crafter ADK
 
-A multi-agent storytelling system powered by **Google Agent Development Kit (ADK)**. This application orchestrates specialized AI agents to collaboratively generate age-appropriate, engaging stories through an interactive web interface or CLI.
+A multi-agent storytelling system powered by **Google Agent Development Kit (ADK)**. Unlike a single LLM, this application orchestrates a team of specialized AI agents—each an expert in world-building, character design, plot architecture, and prose—to collaboratively craft personalized, age-appropriate stories. With **long-term memory** powered by Vertex AI Memory Bank, your characters, worlds, and plot details persist across sessions, enabling evolving narratives that remember and build upon your creative history.
+
+## 📸 Screenshots
+
+<p align="center">
+  <img src="docs/images/ui-screenshot.png" alt="Story Crafter UI" width="800">
+</p>
+
+*The UI theme is inspired by Google's Material Design and is used for demonstration purposes only.*
 
 ## 🏛️ Agent Architecture
 
@@ -116,6 +124,21 @@ graph TD
     linkStyle default stroke:#546E7A,stroke-width:2px;
 ```
 
+### Agent Glossary
+
+| Agent | Role |
+|-------|------|
+| 🚦 **Router** | Classifies user requests into NEW_STORY, EDIT_STORY, or QUESTION modes |
+| 🛡️ **Safety** | Validates content safety using Perspective API before any LLM processing |
+| 🧠 **User Intent** | Extracts structured requirements (age, themes, tone, genre) from natural language |
+| 🌍 **Worldbuilder** | Creates immersive settings, lore, locations, and physical environments |
+| 👥 **Character Forge** | Designs protagonists, supporting cast, and antagonist profiles with depth |
+| 📉 **Plot Architect** | Outlines story beats, conflict, rising action, climax, and resolution |
+| ✍️ **Story Writer** | Transforms structured components into polished narrative prose |
+| 🧐 **Critic** | Reviews stories against quality criteria (part of Quality Loop) |
+| 📝 **Refiner** | Revises stories based on critic feedback (part of Quality Loop) |
+| 🤖 **Story Guide** | Answers questions about story content without modifying it |
+
 ### Memory Services Architecture
 
 ```mermaid
@@ -219,10 +242,12 @@ flowchart LR
 
 ## 📑 Table of Contents
 
+- [📸 Screenshots](#-screenshots)
 - [🎯 Overview](#-overview)
   - [Key Capabilities](#key-capabilities)
 - [🏛️ Agent Architecture](#️-agent-architecture)
   - [Agent Flow Diagram](#agent-flow-diagram)
+  - [Agent Glossary](#agent-glossary)
   - [Memory Services Architecture](#memory-services-architecture)
   - [Cloud Run Deployment & Observability](#cloud-run-deployment--observability)
 - [🏗️ Architecture Details](#️-architecture-details)
@@ -258,7 +283,6 @@ flowchart LR
   - [Parallel Processing](#parallel-processing)
 - [💡 Tips & Best Practices](#-tips--best-practices)
 - [🤝 Contributing](#-contributing)
-- [📄 License](#-license)
 - [🔗 Related Resources](#-related-resources)
 - [🙏 Acknowledgments](#-acknowledgments)
 
@@ -691,10 +715,6 @@ uv run python -m evals.runner
 - **E2E_CASES**: End-to-end story quality tests
 
 Results are saved to `eval_results/` as JSON files.
-
-## 📄 License
-
-See the main Story Crafter project for licensing information.
 
 ## 🔗 Related Resources
 
