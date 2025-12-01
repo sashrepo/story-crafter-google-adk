@@ -4,6 +4,8 @@ A multi-agent storytelling system powered by **Google Agent Development Kit (ADK
 
 ## 🏛️ Agent Architecture
 
+### Agent Flow Diagram
+
 ```mermaid
 graph TD
     %% Nodes and Styles
@@ -114,11 +116,116 @@ graph TD
     linkStyle default stroke:#546E7A,stroke-width:2px;
 ```
 
+### Memory Services Architecture
+
+```mermaid
+flowchart TB
+    subgraph App [📱 Streamlit App]
+        StoryEngine[🎬 Story Engine]
+    end
+    
+    subgraph Memory [🧠 Memory Layer]
+        direction LR
+        MemService{Memory Service}
+        SessService{Session Service}
+        
+        subgraph Dev [Development]
+            InMemMem[(InMemory Memory)]
+            InMemSess[(InMemory Session)]
+        end
+        
+        subgraph Prod [Production - Vertex AI]
+            MemBank[(Memory Bank)]
+            VertexSess[(Session Store)]
+        end
+        
+        MemService --> |local| InMemMem
+        MemService --> |cloud| MemBank
+        SessService --> |local| InMemSess
+        SessService --> |cloud| VertexSess
+    end
+    
+    subgraph Topics [📝 Custom Memory Topics]
+        direction TB
+        StoryContent[story_content]
+    end
+    
+    StoryEngine --> |long-term-memory| MemService
+    StoryEngine --> |sessions| SessService
+    MemBank --> Topics
+
+    %% Styling
+    classDef engine fill:#8E24AA,stroke:#4A148C,color:#fff;
+    classDef service fill:#1E88E5,stroke:#0D47A1,color:#fff;
+    classDef storage fill:#43A047,stroke:#1B5E20,color:#fff;
+    classDef topic fill:#FF6F00,stroke:#E65100,color:#fff;
+    
+    class StoryEngine engine;
+    class MemService,SessService service;
+    class InMemMem,InMemSess,MemBank,VertexSess storage;
+    class StoryContent topic;
+```
+
+### Cloud Run Deployment & Observability
+
+```mermaid
+flowchart LR
+    DevCode[📝 Source Code]
+    GCloudBuild[☁️ gcloud builds submit]
+    GCloudDeploy[🚀 gcloud run deploy]
+    
+    DevCode --> GCloudBuild --> GCloudDeploy
+    
+    subgraph GCP [☁️ Google Cloud Platform]
+        direction TB
+        
+        subgraph Deploy [🚀 Cloud Run]
+            CR[Cloud Run Service]
+        end
+        
+        subgraph Observe [👁️ Observability]
+            Logs[📋 Cloud Logging]
+            Metrics[📊 Metrics]
+        end
+        
+        subgraph Backend [🔧 Backend Services]
+            Gemini[✨ Gemini API]
+            Perspective[🛡️ Perspective API]
+            MemoryBank[🧠 Memory Bank]
+            VertexAI[🤖 Vertex AI]
+        end
+        
+        CR --> |stdout/stderr| Logs
+        CR --> |requests| Metrics
+        CR --> Gemini
+        CR --> Perspective
+        CR --> MemoryBank
+        MemoryBank --> VertexAI
+    end
+    
+    GCloudDeploy --> CR
+    
+    %% Styling
+    classDef local fill:#263238,stroke:#37474F,color:#ECEFF1;
+    classDef cloud fill:#4285F4,stroke:#1A73E8,color:#fff;
+    classDef observe fill:#FBBC04,stroke:#F9AB00,color:#000;
+    classDef backend fill:#34A853,stroke:#1E8E3E,color:#fff;
+    
+    class DevCode,GCloudBuild,GCloudDeploy local;
+    class CR cloud;
+    class Logs,Metrics observe;
+    class Gemini,Perspective,MemoryBank,VertexAI backend;
+```
+
 ## 📑 Table of Contents
 
 - [🎯 Overview](#-overview)
   - [Key Capabilities](#key-capabilities)
-- [🏗️ Architecture](#️-architecture)
+- [🏛️ Agent Architecture](#️-agent-architecture)
+  - [Agent Flow Diagram](#agent-flow-diagram)
+  - [Memory Services Architecture](#memory-services-architecture)
+  - [Cloud Run Deployment & Observability](#cloud-run-deployment--observability)
+- [🏗️ Architecture Details](#️-architecture-details)
   - [Agent Ecosystem](#agent-ecosystem)
   - [Processing Workflows](#processing-workflows)
   - [Orchestration](#orchestration)
@@ -137,24 +244,19 @@ graph TD
   - [Quality Loop Settings](#quality-loop-settings)
   - [Perspective API](#perspective-api)
 - [📊 Data Models](#-data-models)
-- [🔌 Backend Services](#-backend-services)
-  - [StoryEngine](#storyengine-servicesstory_enginepy)
-  - [Memory Services](#memory-services-servicesmemorypy)
-- [🐳 Docker Deployment](#-docker-deployment)
+- [☁️ Google Cloud Deployment](#️-google-cloud-deployment)
   - [Build the Container](#build-the-container)
   - [Run Locally](#run-locally)
   - [Deploy to Google Cloud Run](#deploy-to-google-cloud-run)
+  - [Test with Port Forwarding](#test-with-port-forwarding)
 - [🧪 Development](#-development)
   - [Running Tests](#running-tests)
   - [Evaluations Framework](#evaluations-framework)
-  - [Code Quality](#code-quality)
-  - [Development Dependencies](#development-dependencies)
 - [🎓 How It Works](#-how-it-works)
   - [Story Generation Flow](#story-generation-flow)
   - [Quality Loop Details](#quality-loop-details)
   - [Parallel Processing](#parallel-processing)
 - [💡 Tips & Best Practices](#-tips--best-practices)
-- [🐛 Troubleshooting](#-troubleshooting)
 - [🤝 Contributing](#-contributing)
 - [📄 License](#-license)
 - [🔗 Related Resources](#-related-resources)
@@ -171,10 +273,11 @@ Story Crafter ADK is an intelligent story generation system that uses multiple s
 - **Parallel Processing**: World, character, and plot generation happen simultaneously for optimal performance
 - **Quality Refinement**: Optional iterative review loop with critic and refiner agents to polish stories
 - **Safety-First**: Built-in content safety validation using Google Perspective API (pre-check before any LLM calls)
+- **Long-term Memory**: Vertex AI Memory Bank remembers characters, settings, and plot events across sessions for story continuity
 - **Flexible Storage**: Supports both in-memory (development) and Vertex AI Memory Bank (production) for session and memory persistence
 - **Interactive UI**: Modern Streamlit-based web interface with Google Material Design theme
 
-## 🏗️ Architecture
+## 🏗️ Architecture Details
 
 ### Agent Ecosystem
 
@@ -306,9 +409,31 @@ story-crafter-adk/
 
 ### Prerequisites
 
-- **Python**: 3.10, 3.11, or 3.12 (3.13 not supported per pyproject.toml)
+- **Python**: 3.10, 3.11, or 3.12
 - **uv**: Fast Python package manager ([install instructions](https://docs.astral.sh/uv/))
 - **Google API Key**: For Gemini models (set as `GOOGLE_API_KEY` environment variable)
+
+#### Optional: Vertex AI Agent Engine (for Production)
+
+For persistent memory and sessions using Vertex AI Memory Bank, you'll also need:
+
+- **Google Cloud Project** with Vertex AI API enabled
+- **Agent Engine** created via `scripts/create_agent_engine.py`
+
+Set these environment variables:
+```bash
+export GOOGLE_CLOUD_PROJECT="your-project-id"
+export GOOGLE_CLOUD_LOCATION="us-central1"
+export AGENT_ENGINE_ID="your-agent-engine-id"
+```
+
+#### Optional: Perspective API (for Content Safety)
+
+For content safety validation before LLM processing:
+
+- **Perspective API Key**: Enable the [Perspective API](https://developers.perspectiveapi.com/) in Google Cloud Console
+
+The same `GOOGLE_API_KEY` is used for both Gemini and Perspective API. If not configured, safety checks are skipped with a warning (safe for development).
 
 ### Installation
 
@@ -330,14 +455,10 @@ story-crafter-adk/
    - `python-dotenv>=1.0.1` - Environment management
    - `uvicorn>=0.38.0` - ASGI server
 
-3. **Set your Google API key**:
+3. **Set your Google API key** by copying the example file:
    ```bash
-   export GOOGLE_API_KEY="your-api-key-here"
-   ```
-   
-   Or create a `.env` file:
-   ```bash
-   echo "GOOGLE_API_KEY=your-api-key-here" > .env
+   cp .env.example .env
+   # Edit .env and add your API key, and other configs
    ```
 
 ### Running the Application
@@ -347,7 +468,7 @@ story-crafter-adk/
 Launch the interactive web UI with Google Material Design theme:
 
 ```bash
-streamlit run app.py
+uv run streamlit run app.py
 ```
 
 Then open your browser to `http://localhost:8501`
@@ -356,7 +477,7 @@ Then open your browser to `http://localhost:8501`
 - Interactive chat interface
 - Real-time status updates
 - Collapsible sections for drafts, critiques, and refinements
-- Session management (user ID, session ID)
+- Session management
 - Toggle quality refinement on/off
 - Story history with avatars and formatting
 
@@ -467,103 +588,12 @@ The `services/perspective.py` module handles safety:
 - **Fallback**: If no API key is set, defaults to safe (logs warning)
 - **Raises**: SafetyViolationError on violations
 
-## 📊 Data Models
-
-All agents use strongly-typed Pydantic models for structured outputs:
-
-### UserIntent
-```python
-age: int (1-100)
-themes: list[str]
-tone: str
-genre: str
-length_minutes: int (1-120)
-safety_constraints: Optional[list[str]]
-```
-
-### WorldModel
-```python
-name: str
-description: str
-rules: Optional[list[str]]
-locations: Optional[list[str]]
-aesthetic: Optional[str]
-```
-
-### CharacterModel
-```python
-name: str
-species: str
-role: str  # protagonist, mentor, sidekick, antagonist, helper, rival
-physical_traits: list[str]
-personality_traits: list[str]
-strengths: list[str]
-weaknesses: list[str]
-motivations: str
-goals: str
-relationships: Optional[str]
-```
-
-### PlotModel
-```python
-setup: str
-conflict: str
-rising_action: list[str]  # 2-4 events
-climax: str
-resolution: str
-themes: list[str]
-episode_hook: Optional[str]
-```
-
-### RoutingDecision
-```python
-decision: Literal["NEW_STORY", "EDIT_STORY", "QUESTION"]
-confidence: Optional[float]
-```
-
-## 🔌 Backend Services
-
-### StoryEngine (`services/story_engine.py`)
-
-Main backend service that handles:
-- **Session management**: Creates/retrieves sessions
-- **Mode determination**: Calls router agent
-- **Orchestration**: Selects appropriate orchestrator
-- **Event streaming**: Yields StoryEvent objects for UI
-- **Error handling**: Catches and reports exceptions
-
-**Event Types**:
-- `status`: Processing updates
-- `critique`: Quality loop feedback
-- `refined_story`: Revised drafts
-- `draft_story`: Initial story output
-- `edited_story`: Modified stories
-- `guide_answer`: Q&A responses
-- `agent_output`: Generic agent responses
-- `error`: Errors and safety violations
-- `complete`: Processing finished
-
-### Memory Services (`services/memory.py`)
-
-Provides session and memory services with automatic backend selection:
-
-**In-Memory (Default - Development)**:
-- **InMemoryMemoryService**: For agent memory (cached with Streamlit)
-- **InMemorySessionService**: For conversation history (cached with Streamlit)
-- Sessions are NOT persisted between application restarts
-
-**Vertex AI Memory Bank (Production)**:
-- **VertexAiMemoryBankService**: Persistent memory with custom topic extraction
-- **VertexAiSessionService**: Cloud-based session storage
-- Requires: `GOOGLE_CLOUD_PROJECT`, `GOOGLE_CLOUD_LOCATION`, `AGENT_ENGINE_ID`
-- Custom memory topics defined in `services/memory_config.py`
-
-## 🐳 Docker Deployment
+## ☁️ Google Cloud Deployment
 
 ### Build the Container
 
 ```bash
-docker build -t story-crafter-adk .
+gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/story-crafter-adk .
 ```
 
 ### Run Locally
@@ -574,19 +604,51 @@ docker run -p 8080:8080 -e GOOGLE_API_KEY="your-api-key" story-crafter-adk
 
 ### Deploy to Google Cloud Run
 
+**Basic deployment (development)**:
 ```bash
 gcloud run deploy story-crafter-adk \
   --source . \
   --region us-central1 \
   --set-env-vars GOOGLE_API_KEY="your-api-key" \
-  --allow-unauthenticated
+  --no-allow-unauthenticated
 ```
 
-The Dockerfile uses:
-- **Base**: Python 3.12-slim
-- **Package manager**: uv (fast, reproducible installs)
-- **Port**: 8080 (Cloud Run default)
-- **Production mode**: `--no-dev` flag excludes pytest, ruff
+**Production deployment with Memory Bank**:
+```bash
+gcloud run deploy story-crafter-adk \
+  --source . \
+  --region us-central1 \
+  --set-env-vars GOOGLE_API_KEY="your-api-key" \
+  --set-env-vars GOOGLE_CLOUD_PROJECT="your-project-id" \
+  --set-env-vars GOOGLE_CLOUD_LOCATION="us-central1" \
+  --set-env-vars AGENT_ENGINE_ID="your-agent-engine-id" \
+  --no-allow-unauthenticated
+```
+
+### Test with Port Forwarding
+
+Since the Cloud Run service requires authentication, use `gcloud run services proxy` to create a local tunnel:
+
+**Start the proxy**:
+```bash
+# Port forward to localhost:8080
+gcloud run services proxy story-crafter-adk \
+  --region us-central1 \
+  --port 8080
+```
+
+This creates an authenticated tunnel using your gcloud credentials. The service will be available at `http://localhost:8080`.
+
+**Access the app**:
+```bash
+# Open in browser
+open http://localhost:8080
+
+# Or test with curl
+curl http://localhost:8080
+```
+
+**Viewing logs**: Application logs can be viewed in the [Cloud Run Logs](https://console.cloud.google.com/run) section of the Google Cloud Console.
 
 ## 🧪 Development
 
@@ -596,12 +658,6 @@ The Dockerfile uses:
 uv run pytest
 ```
 
-Test files:
-- `tests/test_perspective.py` - Perspective API integration
-- `tests/test_router_parsing.py` - Router agent output parsing
-- `tests/test_safety_agent.py` - Safety agent behavior
-- `tests/test_evals.py` - Evaluation framework tests
-
 ### Evaluations Framework
 
 Story Crafter includes a comprehensive evaluation framework in `evals/` for systematic testing of agent behavior:
@@ -609,22 +665,12 @@ Story Crafter includes a comprehensive evaluation framework in `evals/` for syst
 #### Running Evaluations
 
 ```bash
-# Run via CLI
+# Set your API key
+export GOOGLE_API_KEY="your-api-key-here"
+
+# Run evals against actual LLM (via CLI runner)
 uv run python -m evals.runner
 
-# Run via pytest
-uv run pytest tests/test_evals.py -v
-```
-
-#### Programmatic Usage
-
-```python
-from evals import EvalRunner, EvalDataset, RouteAccuracy
-
-runner = EvalRunner(verbose=True)
-summary = await runner.run_router_evals()
-summary.print_summary()
-runner.save_results(summary)
 ```
 
 #### Available Metrics
@@ -645,161 +691,6 @@ runner.save_results(summary)
 - **E2E_CASES**: End-to-end story quality tests
 
 Results are saved to `eval_results/` as JSON files.
-
-### Code Quality
-
-**Format code**:
-```bash
-uv run ruff format .
-```
-
-**Lint code**:
-```bash
-uv run ruff check .
-```
-
-**Fix auto-fixable issues**:
-```bash
-uv run ruff check --fix .
-```
-
-### Development Dependencies
-
-Install with `uv sync` (automatic) or manually add to `[dependency-groups]`:
-- `pytest>=8.3.2`
-- `pytest-asyncio>=0.24.0`
-- `ruff>=0.7.0`
-
-## 🎓 How It Works
-
-### Story Generation Flow
-
-1. **User submits request** via Streamlit UI or CLI
-2. **Session created/retrieved** using InMemorySessionService
-3. **Router agent analyzes** request and returns mode (create/edit/question)
-4. **Story Engine selects orchestrator** based on mode
-5. **Orchestrator runs** appropriate agent pipeline:
-   - **Create**: Safety → Intent → [Parallel: World, Char, Plot] → Writer → Quality Loop
-   - **Edit**: Safety → Editor
-   - **Question**: Safety → Guide
-6. **Events stream** back to UI in real-time
-7. **Final story saved** in session state
-
-### Quality Loop Details
-
-The quality loop uses ADK's LoopAgent with two sub-agents:
-
-1. **Critic Agent** reviews the current_story and outputs:
-   - "APPROVED" (exact string) if quality is perfect
-   - Specific feedback if improvements needed
-
-2. **Refiner Agent** receives critique and:
-   - Calls `exit_loop()` tool if critique contains "APPROVED"
-   - Rewrites story incorporating feedback if not approved
-   - Updates current_story for next iteration
-
-Max iterations prevent infinite loops. The current setting is 1 iteration.
-
-### Parallel Processing
-
-The ParallelAgent executes three agents simultaneously:
-- Worldbuilder
-- Character Forge
-- Plot Architect
-
-This reduces latency by ~3x compared to sequential execution. All three outputs are available to downstream agents.
-
-## 💡 Tips & Best Practices
-
-1. **Prompt Engineering**
-   - Be specific about age (affects vocabulary and complexity)
-   - Mention desired length ("5-minute story", "quick tale", "long adventure")
-   - Include themes and tone ("exciting", "calming", "mysterious")
-
-2. **Quality vs. Speed**
-   - Enable refinement for polished stories (slower, 2-4x API calls)
-   - Disable refinement for quick drafts (faster, fewer tokens)
-
-3. **Token Usage**
-   - Each story generation makes 6-15+ API calls depending on refinement
-   - Monitor usage with verbose logging: `adk run agents/orchestrator/story_orchestrator --verbose`
-   - Parallel stage saves time but not tokens
-
-4. **Age Appropriateness**
-   - System automatically adjusts vocabulary, sentence complexity, and themes
-   - Ages 4-7: Simple words, short sentences, positive endings
-   - Ages 8-10: Varied sentences, mild tension, character growth
-   - Ages 11-14: Complex structure, nuanced emotions, deeper themes
-
-5. **Session Management**
-   - Each session maintains conversation history
-   - Use "New Conversation" to reset context
-   - Sessions expire on application restart (in-memory only)
-
-6. **Safety**
-   - All user input is validated before processing
-   - Perspective API checks toxicity (threshold: 0.7)
-   - Safety violations halt processing immediately
-
-## 🐛 Troubleshooting
-
-### "API Key not found"
-**Solution**: Set `GOOGLE_API_KEY` environment variable or add to `.env` file
-
-### "Module not found" errors
-**Solution**: Run `uv sync` from project root to install dependencies
-
-### Agent outputs unexpected results
-**Solution**: 
-- Check agent instructions in `agents/{agent_name}/agent.py`
-- Verify output_schema matches expectations
-- Review ADK logs for validation errors
-
-### Stories are too short/long
-**Solution**: 
-- Specify length explicitly in prompt ("10-minute story")
-- Story Writer respects length_minutes from User Intent
-- Check User Intent agent is extracting length correctly
-
-### Quality loop never approves
-**Solution**:
-- Critic is intentionally strict (requires >9.8/10)
-- Adjust threshold in `agents/story_quality_loop/agent.py`
-- Current max_iterations=1 limits refinement cycles
-
-### Perspective API errors
-**Solution**:
-- Verify API key is valid
-- Check quota limits in Google Cloud Console
-- If developing without key, app defaults to safe (with warnings)
-
-### Streamlit UI not updating
-**Solution**:
-- Check session caching: `st.cache_resource` decorators must be present
-- Verify event streaming in `app.py` async loop
-- Restart Streamlit: `Ctrl+C` and rerun `streamlit run app.py`
-
-## 🤝 Contributing
-
-This is a focused ADK implementation emphasizing agent orchestration patterns. Contributions should:
-
-1. **Follow agent structure**:
-   - Each agent in its own module with `create_agent()` factory
-   - Use structured outputs (Pydantic models)
-   - Keep agents stateless
-
-2. **Maintain type safety**:
-   - All models use Pydantic with Field validators
-   - Type hints throughout codebase
-
-3. **Document thoroughly**:
-   - Docstrings for all agents and functions
-   - Update README for architectural changes
-
-4. **Test coverage**:
-   - Add tests for new agents/services
-   - Use pytest-asyncio for async code
-   - Add eval cases for new agent behaviors
 
 ## 📄 License
 

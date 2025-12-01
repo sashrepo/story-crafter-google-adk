@@ -1,0 +1,353 @@
+{
+  "run_id": "20251130_182819",
+  "total_cases": 19,
+  "passed_cases": 19,
+  "failed_cases": 0,
+  "pass_rate": 1.0,
+  "avg_score": 1.0,
+  "avg_latency_ms": 1020.9921535692716,
+  "results": [
+    {
+      "case_id": "router_new_1",
+      "input": "Tell me a story about a brave knight",
+      "output": "{\"decision\": \"NEW_STORY\", \"confidence\": 1}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'create', got 'create'"
+        }
+      ],
+      "latency_ms": 910.1333618164062,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:00.581780"
+    },
+    {
+      "case_id": "router_new_2",
+      "input": "I want a 5-minute bedtime story for a 7-year-old about dragons",
+      "output": "{\"decision\": \"NEW_STORY\", \"confidence\": 1}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'create', got 'create'"
+        }
+      ],
+      "latency_ms": 884.0229511260986,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:01.466001"
+    },
+    {
+      "case_id": "router_new_3",
+      "input": "Start over with a completely different story",
+      "output": "{\"decision\": \"NEW_STORY\", \"confidence\": 1}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'create', got 'create'"
+        }
+      ],
+      "latency_ms": 900.374174118042,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:02.366588"
+    },
+    {
+      "case_id": "router_new_4",
+      "input": "Create an adventure story set in space",
+      "output": "{\"decision\": \"NEW_STORY\", \"confidence\": 1.0}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'create', got 'create'"
+        }
+      ],
+      "latency_ms": 1209.1310024261475,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:03.575926"
+    },
+    {
+      "case_id": "router_new_5",
+      "input": "New story please - this time about mermaids",
+      "output": "{\"decision\": \"NEW_STORY\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'create', got 'create'"
+        }
+      ],
+      "latency_ms": 1053.5969734191895,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:04.629651"
+    },
+    {
+      "case_id": "router_edit_1",
+      "input": "Make it funnier",
+      "output": "{\"decision\": \"EDIT_STORY\", \"confidence\": 1}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 1170.668125152588,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:05.800361"
+    },
+    {
+      "case_id": "router_edit_2",
+      "input": "Change the character's name to Luna",
+      "output": "{\"decision\":\"EDIT_STORY\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 824.5089054107666,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:06.624929"
+    },
+    {
+      "case_id": "router_edit_3",
+      "input": "The ending is too sad, can you make it happier?",
+      "output": "{\"decision\": \"EDIT_STORY\", \"confidence\": 1}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 1030.6510925292969,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:07.655676"
+    },
+    {
+      "case_id": "router_edit_4",
+      "input": "Rewrite the second paragraph",
+      "output": "{\"decision\": \"EDIT_STORY\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 778.3019542694092,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:08.434188"
+    },
+    {
+      "case_id": "router_edit_5",
+      "input": "It's too long, shorten it",
+      "output": "{\"decision\": \"EDIT_STORY\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 1080.6000232696533,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:09.514931"
+    },
+    {
+      "case_id": "router_edit_6",
+      "input": "Add more dialogue between the characters",
+      "output": "{\"decision\":\"EDIT_STORY\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 818.152904510498,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:10.333145"
+    },
+    {
+      "case_id": "router_question_1",
+      "input": "Why did the hero make that decision?",
+      "output": "{\"decision\": \"QUESTION\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'question', got 'question'"
+        }
+      ],
+      "latency_ms": 772.6809978485107,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:11.105874"
+    },
+    {
+      "case_id": "router_question_2",
+      "input": "Who is the villain in this story?",
+      "output": "{\"decision\": \"QUESTION\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'question', got 'question'"
+        }
+      ],
+      "latency_ms": 1008.6400508880615,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:12.114557"
+    },
+    {
+      "case_id": "router_question_3",
+      "input": "What happens next?",
+      "output": "{\"decision\":\"QUESTION\",\"confidence\":1}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'question', got 'question'"
+        }
+      ],
+      "latency_ms": 891.8211460113525,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:13.006454"
+    },
+    {
+      "case_id": "router_question_4",
+      "input": "Can you explain the magic system?",
+      "output": "{\"decision\": \"QUESTION\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'question', got 'question'"
+        }
+      ],
+      "latency_ms": 886.1539363861084,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:13.892748"
+    },
+    {
+      "case_id": "router_question_5",
+      "input": "How old is the main character?",
+      "output": "{\"decision\":\"QUESTION\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'question', got 'question'"
+        }
+      ],
+      "latency_ms": 802.0961284637451,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:14.694884"
+    },
+    {
+      "case_id": "router_edge_1",
+      "input": "I don't like it",
+      "output": "{\"decision\":\"EDIT_STORY\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 873.5601902008057,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:15.568497"
+    },
+    {
+      "case_id": "router_edge_2",
+      "input": "What if the dragon was friendly instead?",
+      "output": "{\"decision\": \"EDIT_STORY\", \"confidence\": 1}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 752.17604637146,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:16.320742"
+    },
+    {
+      "case_id": "router_edge_3",
+      "input": "Continue the story and add a dragon",
+      "output": "{\"decision\":\"EDIT_STORY\"}",
+      "metrics": [
+        {
+          "name": "route_accuracy",
+          "passed": true,
+          "score": 1.0,
+          "details": "Expected 'edit', got 'edit'"
+        }
+      ],
+      "latency_ms": 2751.5809535980225,
+      "passed": true,
+      "score": 1.0,
+      "error": null,
+      "timestamp": "2025-11-30T18:28:19.072424"
+    }
+  ]
+}

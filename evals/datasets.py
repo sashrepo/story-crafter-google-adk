@@ -173,7 +173,7 @@ class EvalDataset:
         ),
         EvalCase(
             id="router_edge_3",
-            input="Continue the story",
+            input="Continue the story and add a dragon",
             expected_route="edit",  # Extending = editing
             tags=["router", "edge_case"],
         ),
